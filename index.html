@@ -107,7 +107,59 @@
     label.meal{border:none;background:none;padding:2px 0}
     label.thistle:not(.on){display:none}
     label.thistle.on{border-style:solid}
-    .household,.storesel{display:none}
+    .household,.storesel,.mealactions{display:none}
+    .overlay{display:none!important}
+  }
+  /* ---------- modal / overlay ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(20,18,15,.5);display:none;align-items:flex-start;
+    justify-content:center;padding:30px 16px;z-index:50;overflow-y:auto}
+  .overlay.show{display:flex}
+  .modal{background:var(--card);border-radius:18px;max-width:640px;width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;margin:auto}
+  .modal .mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+    padding:18px 22px;border-bottom:1px solid var(--line)}
+  .modal .mhead h2{margin:0;font-size:20px}
+  .modal .mhead .theme{color:var(--accent2);font-weight:600;font-size:12px;
+    text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+  .modal .mbody{padding:18px 22px 22px;max-height:72vh;overflow-y:auto}
+  .mclose{border:none;background:#f0ece4;border-radius:50%;width:32px;height:32px;font-size:18px;
+    line-height:1;color:var(--muted);box-shadow:none;flex:none}
+  .mclose:hover{transform:none;background:#e6e1d8;color:var(--ink)}
+  .recipe-sec h3{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent2);margin:18px 0 8px}
+  .recipe-sec h3:first-child{margin-top:0}
+  .recipe-ing{list-style:none;margin:0;padding:0}
+  .recipe-ing li{display:flex;justify-content:space-between;gap:10px;font-size:14px;
+    padding:5px 0;border-bottom:1px dashed var(--line)}
+  .recipe-ing li:last-child{border-bottom:none}
+  .recipe-ing .ri-store{color:var(--muted);font-size:12px;white-space:nowrap}
+  .recipe-steps{margin:0;padding-left:22px}
+  .recipe-steps li{font-size:14.5px;margin-bottom:9px;line-height:1.5}
+  .recipe-note{background:#fdf0e6;color:var(--accent2);font-size:13px;
+    padding:9px 12px;border-radius:9px;margin-bottom:4px}
+  .no-recipe{color:var(--muted);font-style:italic;font-size:14px}
+  .mealbody{display:block}
+  .mealactions{margin-top:6px}
+  button.link{background:none;border:none;box-shadow:none;padding:0;
+    color:var(--accent);font-size:12.5px;font-weight:600}
+  button.link:hover{transform:none;text-decoration:underline}
+  .custom-tag{font-size:10px;font-weight:700;color:var(--accent2);background:#fdf0e6;
+    padding:1px 7px;border-radius:20px;margin-left:6px;vertical-align:middle}
+  /* ---------- add-meal form ---------- */
+  .fld{margin-bottom:14px}
+  .fld .lab{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  .fld input[type=text],.fld textarea,.fld select{width:100%;font:inherit;padding:9px 12px;
+    border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+  .fld textarea{min-height:120px;resize:vertical;line-height:1.5}
+  .fld input:focus,.fld textarea:focus,.fld select:focus{outline:none;border-color:var(--accent)}
+  .ing-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+  .ing-row input.ing-name{flex:2;min-width:0}
+  .ing-row select.ing-store{flex:1;min-width:0}
+  .ing-row input.ing-amt{width:58px;flex:none}
+  .ing-row input.ing-unit{width:78px;flex:none}
+  .mfoot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+  @media (max-width:540px){
+    .ing-row{flex-wrap:wrap}
+    .ing-row input.ing-name{flex:1 1 100%}
   }
 </style>
 </head>
@@ -120,6 +172,7 @@
     </div>
     <div class="toolbar">
       <button class="primary" onclick="buildList()">🛒 Build grocery list</button>
+      <button onclick="openAddMeal()">➕ Add dinner</button>
       <button onclick="window.print()">🖨️ Print menu</button>
       <button onclick="resetPrefs()" title="Forget learned store choices">↺ Store memory</button>
       <button class="warn" onclick="resetWeek()">↺ Clear week</button>
@@ -155,6 +208,51 @@
   </div>
 
   <footer>Built for the Moore family • Plan Sunday, shop once, eat all week.</footer>
+</div>
+
+<!-- Recipe viewer -->
+<div class="overlay" id="recipeModal" onclick="if(event.target===this)closeModal('recipeModal')">
+  <div class="modal">
+    <div class="mhead">
+      <div><div class="theme" id="rcpTheme"></div><h2 id="rcpTitle"></h2></div>
+      <button class="mclose" onclick="closeModal('recipeModal')" title="Close">×</button>
+    </div>
+    <div class="mbody" id="rcpBody"></div>
+  </div>
+</div>
+
+<!-- Add-a-dinner form -->
+<div class="overlay" id="addMealModal" onclick="if(event.target===this)closeModal('addMealModal')">
+  <div class="modal">
+    <div class="mhead">
+      <div><div class="theme">New dinner option</div><h2>Add a dinner</h2></div>
+      <button class="mclose" onclick="closeModal('addMealModal')" title="Close">×</button>
+    </div>
+    <div class="mbody">
+      <div class="fld"><span class="lab">Day of the week</span>
+        <select id="am-day"></select></div>
+      <div class="fld"><span class="lab">Dinner name</span>
+        <input id="am-name" type="text" placeholder="e.g. Lemon Garlic Chicken" autocomplete="off"></div>
+      <div class="fld"><span class="lab">Short description</span>
+        <input id="am-desc" type="text" placeholder="One line shown on the card" autocomplete="off"></div>
+      <div class="fld"><span class="lab">Gluten-free status</span>
+        <div class="gfrow" style="display:flex;gap:18px;align-items:center;font-size:14px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="am-gf" value="native" checked> GF as written</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="am-gf" value="adapt"> Needs a GF swap</label>
+        </div></div>
+      <div class="fld" id="am-note-wrap" style="display:none"><span class="lab">GF swap note</span>
+        <input id="am-note" type="text" placeholder="e.g. Use tamari instead of soy sauce" autocomplete="off"></div>
+      <div class="fld"><span class="lab">Ingredients <span style="font-weight:400">— item, store, and optional quantity</span></span>
+        <div id="am-ings"></div>
+        <button onclick="addIngredientRow()" style="font-size:13px;margin-top:4px">+ Add ingredient</button></div>
+      <div class="fld"><span class="lab">Cooking instructions <span style="font-weight:400">— one step per line</span></span>
+        <textarea id="am-steps" placeholder="Preheat oven to 400°F.&#10;Season the chicken with salt and pepper.&#10;Roast 25 minutes until cooked through."></textarea></div>
+      <div class="mfoot">
+        <button onclick="closeModal('addMealModal')">Cancel</button>
+        <button class="primary" onclick="saveMeal()">Save dinner</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -256,12 +354,54 @@ const DAYS = [
   ]}
 ];
 
+/* ---------- RECIPES (cooking instructions) ----------
+   Keyed by meal name. Custom meals carry their own `steps`; built-ins look up here. */
+const RECIPES = {
+  "Marvelous Meatballs & Marinara":["Mix ground beef, ground pork, 1 egg, grated parmesan, finely diced onion, and minced garlic; season with salt and pepper.","Roll into 1½-inch meatballs.","Brown the meatballs in an oiled skillet over medium-high, turning until seared all over.","Pour in the marinara, lower the heat, cover, and simmer 15–20 minutes until cooked through.","Meanwhile cook the GF pasta to package directions and drain.","Serve the meatballs and sauce over the pasta with extra parmesan."],
+  "Mediterranean Meatball Bowls":["Cook the white rice.","Mix ground beef with minced garlic, chopped parsley, salt, and pepper; roll into small meatballs.","Sear the meatballs in an oiled skillet over medium-high until browned and cooked through, 8–10 minutes.","Stir Greek yogurt with a squeeze of lemon, salt, and a little grated cucumber for a quick tzatziki.","Dice the remaining cucumber and the tomatoes.","Build bowls of rice, meatballs, cucumber, and tomato; top with tzatziki, lemon, and parsley."],
+  "Mozzarella-Stuffed Meatball Bake":["Preheat oven to 400°F.","Mix ground beef with 1 egg, almond flour, Italian seasoning, salt, and pepper.","Cut the mozzarella into cubes; wrap a spoon of meat around each cube and seal into a ball.","Arrange the meatballs in a baking dish and spoon crushed tomatoes over the top.","Bake 22–25 minutes until cooked through.","Top with shredded mozzarella and bake 5 more minutes until melted."],
+  "Maple-Glazed Mini Meatloaves":["Preheat oven to 375°F.","Mix ground beef with GF rolled oats, grated onion, salt, and pepper.","Shape into individual mini loaves on a lined baking sheet.","Stir maple syrup with ketchup and brush over the tops.","Bake 25–30 minutes until cooked through, brushing with more glaze halfway.","Meanwhile boil the potatoes, then mash with butter and salt; serve alongside."],
+  "Mushroom & Beef Meatballs (Zoodles)":["Spiralize or julienne the zucchini into noodles and set aside.","Mix ground beef with grated onion, salt, and pepper; roll into meatballs.","Brown the meatballs in an oiled skillet, then remove.","Sauté the sliced mushrooms in the same pan until golden.","Add beef broth, return the meatballs, and simmer 10 minutes into a light gravy.","Add the zoodles for the last 2–3 minutes just to soften; season and serve."],
+  "Classic Beef Tacos":["Brown the ground beef in a skillet over medium-high, breaking it up.","Drain excess fat, add taco seasoning and a splash of water, and simmer 5 minutes.","Warm the corn tortillas in a dry pan or microwave.","Shred the lettuce, dice the tomatoes, and grate the cheddar.","Fill the tortillas with beef and toppings; finish with salsa."],
+  "Tinga Chicken Tacos":["Simmer the chicken thighs in salted water until cooked, about 18 minutes, then shred.","Blend crushed tomatoes, chipotle in adobo, and a little onion until smooth.","Sauté sliced onion in oil, add the sauce, and simmer 5 minutes.","Add the shredded chicken and simmer until coated and saucy.","Warm the corn tortillas; fill with tinga and top with cilantro and a squeeze of lime."],
+  "Tilapia Fish Tacos":["Pat the tilapia dry and season with cumin, salt, and pepper.","Pan-sear in oil over medium-high, 3–4 minutes per side, until flaky; break into pieces.","Toss shredded cabbage with lime juice and salt for a quick slaw.","Stir sour cream with lime juice to make a crema.","Warm the corn tortillas; fill with fish, slaw, and crema."],
+  "Tex-Mex Taco Salad":["Brown the ground beef, drain, and season with salt (or a little taco seasoning).","Rinse and warm the black beans; drain the corn.","Chop the romaine, dice the avocado, and grate the cheddar.","Build bowls of romaine topped with beef, beans, corn, avocado, and cheese.","Crush tortilla chips over the top and finish with salsa."],
+  "Turkey Taco Bowls":["Cook the white rice, then stir in lime juice and chopped cilantro.","Brown the ground turkey in oil and season with salt and pepper.","Warm the black beans.","Build bowls of cilantro-lime rice, turkey, and beans.","Top with salsa and extra lime."],
+  "Wok Chicken Stir-Fry":["Slice the chicken breast thin and cut the stir-fry veg into bite-size pieces.","Cook the white rice.","Whisk tamari with grated ginger, minced garlic, and a splash of water.","Stir-fry the chicken in a hot oiled wok until just cooked; remove.","Stir-fry the vegetables until crisp-tender.","Return the chicken, add the sauce, toss 1 minute, and serve over rice."],
+  "Walnut Shrimp":["Cook the white rice.","Pat the shrimp dry and toss lightly in cornstarch.","Fry the shrimp in oil over medium-high until pink and crisp; drain.","Stir mayonnaise with honey and a splash of water for the sauce.","Toast the walnuts in a dry pan.","Toss the shrimp with the sauce and walnuts; serve over rice."],
+  "Wok Beef & Broccoli":["Slice the beef sirloin thin against the grain and cut the broccoli into florets.","Cook the white rice.","Whisk tamari with cornstarch, minced garlic, and a splash of water.","Sear the beef in a hot oiled wok until browned; remove.","Stir-fry the broccoli with a splash of water until crisp-tender.","Return the beef, add the sauce, toss until glossy, and serve over rice."],
+  "Wonderful Veggie Fried Rice":["Use cold, day-old white rice for the best texture.","Scramble the eggs in an oiled wok, then remove.","Stir-fry the peas and carrots until hot.","Add the rice and press it into the pan to crisp slightly.","Add tamari and stir the eggs back in.","Finish with sliced green onion and a drizzle of sesame oil."],
+  "Wok Pork & Peppers":["Slice the pork loin, bell peppers, and onion into thin strips.","Cook the white rice.","Stir-fry the pork in a hot oiled wok until browned; remove.","Stir-fry the peppers and onion until crisp-tender.","Return the pork, add tamari, and toss 1 minute.","Serve over rice."],
+  "Thai Chicken Curry":["Cook the white rice.","Cut the chicken thighs and bell peppers into bite-size pieces.","Fry the red curry paste in a little oil until fragrant.","Stir in the coconut milk and bring to a gentle simmer.","Add the chicken and peppers; simmer 12–15 minutes until cooked.","Finish with torn basil and serve over rice."],
+  "Thai Peanut Noodles":["Cook the rice noodles to package directions; drain and rinse.","Whisk peanut butter with tamari, lime juice, and warm water until pourable.","Julienne the carrots and slice the green onion.","Toss the noodles with the peanut sauce.","Top with carrots and green onion and add extra lime."],
+  "Thai Basil Beef (Pad Krapow)":["Cook the white rice.","Stir-fry the ground beef in a hot oiled pan until browned.","Add tamari and a dash of fish sauce; toss 1 minute.","Stir in a big handful of Thai basil until wilted.","Fry an egg in oil until crispy-edged.","Serve the beef over rice, topped with the fried egg."],
+  "Thai Coconut Shrimp Soup (Tom Kha)":["Bring the coconut milk and an equal splash of water to a gentle simmer.","Add sliced ginger and let it infuse 5 minutes.","Add the sliced mushrooms and simmer 5 minutes.","Add the shrimp and cook 2–3 minutes until pink.","Finish with lime juice and cilantro; season to taste."],
+  "Thai Turkey Lettuce Wraps":["Stir-fry the ground turkey in oil until browned and cooked through.","Add tamari and lime juice and toss to coat.","Stir in julienned carrots for the last minute.","Separate and rinse the butter lettuce leaves.","Spoon the turkey into lettuce cups and top with mint."],
+  "Chicken Fajitas":["Slice the chicken breast, bell peppers, and onion into strips.","Toss the chicken with fajita seasoning.","Sear the chicken in a hot oiled skillet until cooked; remove.","Sauté the peppers and onion until charred and tender.","Return the chicken, add a squeeze of lime, and warm the corn tortillas.","Serve the sizzling filling with the tortillas."],
+  "Foil-Pack Salmon & Veggies":["Preheat oven to 400°F.","Halve the baby potatoes and parboil 8 minutes to give them a head start.","Place salmon, potatoes, and asparagus on large foil sheets.","Top with butter, minced garlic, lemon slices, salt, and pepper.","Fold into sealed packets.","Bake 15–18 minutes until the salmon flakes and the veggies are tender."],
+  "Crispy Fish & Fries":["Preheat oven to 425°F and bake the frozen fries per the package.","Pat the cod dry and cut into strips.","Set up a beaten egg and a bowl of GF flour blend.","Dip the fish in egg, then GF flour, pressing to coat.","Pan-fry in oil over medium-high until golden and flaky, 3–4 minutes per side.","Serve with the fries and lemon wedges."],
+  "Shrimp Fajitas":["Slice the bell peppers and onion into strips.","Pat the shrimp dry and toss with fajita seasoning.","Sauté the peppers and onion in oil until charred-tender; remove.","Cook the shrimp in the hot pan 2–3 minutes until pink.","Return the veggies, add a squeeze of lime, and warm the corn tortillas.","Serve together."],
+  "GF Flatbread Pizzas":["Preheat oven to 425°F.","Place the GF flatbreads on a baking sheet.","Spread with pizza sauce.","Top with mozzarella, pepperoni, and sliced bell peppers.","Bake 10–12 minutes until the cheese is bubbly and the edges are crisp."],
+  "Sizzling Steak & Potatoes":["Take the steaks out to come to room temperature; pat dry and season generously with salt and pepper.","Preheat oven to 425°F; halve the baby potatoes, toss with oil and salt, and roast 25–30 minutes.","Sear the steaks in a hot oiled pan or on the grill, 3–4 minutes per side for medium.","Add butter and minced garlic to the pan and baste the steaks.","Rest the steaks 5 minutes before slicing.","Serve with the potatoes and a simple green salad."],
+  "Smoky BBQ Chicken":["Pat the chicken thighs dry and season with salt and pepper.","Grill or pan-sear over medium heat until nearly cooked, turning once.","Brush generously with GF BBQ sauce and cook a few more minutes, glazing both sides.","Grill the corn on the cob until charred.","Toss the coleslaw mix with a little dressing.","Serve the chicken with corn and slaw."],
+  "Sausage & Peppers Skillet":["Cook the white rice.","Slice the Italian sausage, bell peppers, and onion.","Brown the sausage in an oiled skillet, then remove.","Sauté the peppers and onion until soft and slightly charred.","Return the sausage and toss together until heated through.","Serve over rice."],
+  "Salmon Sliders":["Finely chop the salmon (or pulse in a processor) and mix with a little mayo, lemon, salt, and pepper.","Form into small patties.","Pan-sear in oil over medium-high, about 3 minutes per side, until cooked.","Toss the coleslaw mix with mayo and lemon for a quick slaw.","Serve the patties on GF buns topped with slaw."],
+  "Shrimp Skewers":["Soak wooden skewers if using; preheat the grill or broiler.","Cut the zucchini and bell peppers into chunks.","Toss the shrimp and veggies with olive oil, salt, and pepper.","Thread shrimp, zucchini, cherry tomatoes, and peppers onto skewers.","Grill 2–3 minutes per side until the shrimp are pink and the veggies are charred."],
+  "Slow-Cooker Pot Roast":["Season the chuck roast with salt and pepper and sear all sides in an oiled pan (optional but worth it).","Place the roast in the slow cooker.","Add quartered onion, chunked carrots, and potatoes around it.","Pour in the beef broth.","Cook on low 8 hours (or high 5) until fork-tender.","Shred or slice and serve with the vegetables and juices."],
+  "Slow-Cooker Salsa Chicken":["Place the chicken breasts in the slow cooker.","Pour the salsa over the top.","Cook on low 6 hours (or high 3) until tender.","Shred the chicken in the sauce.","Stir in the black beans to warm through; cook the white rice.","Serve over rice topped with cheddar."],
+  "Sheet-Pan Sausage & Veggies":["Preheat oven to 425°F.","Cube the sweet potatoes and halve the Brussels sprouts.","Slice the smoked sausage.","Toss everything with olive oil, salt, and pepper on a sheet pan.","Roast 25–30 minutes, stirring once, until caramelized and tender."],
+  "Slow-Cooker Pulled Pork":["Season the pork shoulder with salt and pepper and place in the slow cooker.","Add a splash of water or broth.","Cook on low 8–10 hours until it shreds easily.","Drain excess liquid and shred the pork.","Toss with GF BBQ sauce.","Toss the coleslaw mix with a little dressing; serve the pork on GF buns topped with slaw."],
+  "Savory Slow-Cooker Chili":["Brown the ground beef with diced onion in a skillet, then drain.","Transfer to the slow cooker.","Add crushed tomatoes, drained kidney beans, and chili powder.","Stir, then cook on low 6 hours (or high 3).","Season to taste.","Serve topped with shredded cheddar."]
+};
+
 const STORE_ORDER = ["Smiths","Whole Foods","Walmart","Amazon"];
 let selections = {};     // day -> meal index
 let thistleNights = {};  // day -> true when adults eat Thistle (cook for kids only)
 let householdSel = {};   // household/staple item name -> true (needed this week)
 let storePrefs = {};     // item name -> preferred store (learned override)
-let customItems = [];    // user-added items: {n:name, s:default store}
+let customItems = [];    // user-added household items: {n:name, s:default store}
+let customMeals = {};    // day index -> array of user-added meals {name,gf,note?,desc,ing,steps,custom:true}
+let customQty = {};      // ingredient name -> [amount, unit, 0] for custom meal ingredients
 
 /* ---------- FAMILY-OF-4 QUANTITIES ----------
    [amount, unit, staple]  amount = per single dinner for 4 people.
@@ -440,6 +580,9 @@ function bindStoreSelects(scope){
   });
 }
 
+/* built-in meals for a day, plus any custom dinners the user added */
+function mealsFor(di){ return DAYS[di].meals.concat(customMeals[di]||[]); }
+
 /* ---------- RENDER DAYS ---------- */
 function render(){
   const grid = document.getElementById('grid');
@@ -448,15 +591,17 @@ function render(){
     const card = document.createElement('div');
     card.className = 'day';
     let html = `<div class="theme">${d.theme}</div><h2>${d.day}${thistleNights[di]?' <span class="tbadge">🌿 Thistle</span>':''}</h2><div class="meals">`;
-    d.meals.forEach((m,mi)=>{
+    mealsFor(di).forEach((m,mi)=>{
       const sel = selections[di]===mi ? 'sel':'';
       const badge = m.gf==='native'
         ? `<span class="badge">GF</span>`
         : `<span class="badge adapt" title="${m.note||''}">GF swap</span>`;
+      const ctag = m.custom ? ` <span class="custom-tag">yours</span>` : '';
       html += `<label class="meal ${sel}" data-d="${di}" data-m="${mi}">
         <input type="radio" name="day${di}" ${sel?'checked':''}>
-        <span><span class="name">${m.name}${badge}</span>
-        <span class="desc">${m.desc}${m.gf==='adapt'?' <em>('+m.note+')</em>':''}</span></span>
+        <span class="mealbody"><span class="name">${m.name}${badge}${ctag}</span>
+        <span class="desc">${m.desc}${m.gf==='adapt'&&m.note?' <em>('+m.note+')</em>':''}</span>
+        <span class="mealactions"><button class="link" data-recipe data-d="${di}" data-m="${mi}">📖 View recipe</button></span></span>
       </label>`;
     });
     html += '</div>';
@@ -470,6 +615,12 @@ function render(){
     l.addEventListener('click',()=>{
       const di=+l.dataset.d, mi=+l.dataset.m;
       selections[di]=mi; save(); render();
+    });
+  });
+  document.querySelectorAll('button[data-recipe]').forEach(b=>{
+    b.addEventListener('click',e=>{
+      e.preventDefault(); e.stopPropagation();
+      openRecipe(+b.dataset.d,+b.dataset.m);
     });
   });
   document.querySelectorAll('label.thistle input').forEach(inp=>{
@@ -497,7 +648,8 @@ function buildList(){
   const byStore={};
   let summaryParts=[], thistleCount=0;
   chosen.forEach(di=>{
-    const meal=DAYS[di].meals[selections[di]];
+    const meal=mealsFor(di)[selections[di]];
+    if(!meal) return;
     const isThistle=!!thistleNights[di];
     const serves=isThistle?KIDS:FULL;
     const factor=serves/FULL;
@@ -543,13 +695,104 @@ function buildList(){
   panel.scrollIntoView({behavior:'smooth'});
 }
 
+/* ---------- MODALS ---------- */
+function openModal(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden';}
+function closeModal(id){document.getElementById(id).classList.remove('show');document.body.style.overflow='';}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal('recipeModal');closeModal('addMealModal');} });
+
+/* full-serving quantity for a single recipe (factor 1) */
+function recipeQty(item){ const q=QTY[item]; return q?(q[0]+' '+q[1]):''; }
+
+/* ---------- RECIPE VIEWER ---------- */
+function openRecipe(di,mi){
+  const m=mealsFor(di)[mi]; if(!m) return;
+  document.getElementById('rcpTheme').textContent=DAYS[di].day+' · '+DAYS[di].theme;
+  document.getElementById('rcpTitle').innerHTML=m.name+(m.custom?' <span class="custom-tag">yours</span>':'');
+  const steps=(m.steps&&m.steps.length)?m.steps:(RECIPES[m.name]||[]);
+  let h='';
+  if(m.gf==='adapt'&&m.note) h+=`<div class="recipe-note">🌾 Gluten-free: ${m.note}</div>`;
+  h+='<div class="recipe-sec"><h3>Ingredients <span style="font-weight:400;text-transform:none;color:var(--muted)">(serves '+FULL+')</span></h3><ul class="recipe-ing">';
+  m.ing.forEach(([item,store])=>{
+    const cur=storeFor(item,store), q=recipeQty(item);
+    h+=`<li><span>${item}${q?` — <span class="qty">${q}</span>`:''}</span><span class="ri-store">${cur}</span></li>`;
+  });
+  h+='</ul></div><div class="recipe-sec"><h3>Cooking instructions</h3>';
+  if(steps.length) h+='<ol class="recipe-steps">'+steps.map(s=>`<li>${s}</li>`).join('')+'</ol>';
+  else h+='<p class="no-recipe">No instructions added yet for this dinner.</p>';
+  h+='</div>';
+  if(m.custom) h+=`<div class="mfoot"><button class="warn" onclick="deleteCustomMeal(${di},${mi})">🗑 Delete this dinner</button></div>`;
+  document.getElementById('rcpBody').innerHTML=h;
+  openModal('recipeModal');
+}
+
+/* ---------- ADD A DINNER ---------- */
+function openAddMeal(){
+  document.getElementById('am-day').innerHTML=DAYS.map((d,i)=>`<option value="${i}">${d.day} — ${d.theme}</option>`).join('');
+  document.getElementById('am-name').value='';
+  document.getElementById('am-desc').value='';
+  document.getElementById('am-note').value='';
+  document.getElementById('am-steps').value='';
+  document.querySelector('input[name="am-gf"][value="native"]').checked=true;
+  document.getElementById('am-note-wrap').style.display='none';
+  document.getElementById('am-ings').innerHTML='';
+  addIngredientRow(); addIngredientRow(); addIngredientRow();
+  openModal('addMealModal');
+}
+function addIngredientRow(name='',store='Smiths',amt='',unit=''){
+  const wrap=document.getElementById('am-ings');
+  const row=document.createElement('div'); row.className='ing-row';
+  const esc=s=>String(s).replace(/"/g,'&quot;');
+  row.innerHTML=`<input class="ing-name" type="text" placeholder="Ingredient" value="${esc(name)}" autocomplete="off">
+    <select class="ing-store">${STORE_ORDER.map(s=>`<option${s===store?' selected':''}>${s}</option>`).join('')}</select>
+    <input class="ing-amt" type="text" placeholder="Qty" value="${esc(amt)}" autocomplete="off">
+    <input class="ing-unit" type="text" placeholder="unit" value="${esc(unit)}" autocomplete="off">
+    <button class="rm" onclick="this.parentNode.remove()" title="Remove">×</button>`;
+  wrap.appendChild(row);
+}
+function saveMeal(){
+  const di=+document.getElementById('am-day').value;
+  const name=document.getElementById('am-name').value.trim();
+  if(!name){alert('Please give the dinner a name.');return;}
+  const desc=document.getElementById('am-desc').value.trim();
+  const gf=document.querySelector('input[name="am-gf"]:checked').value;
+  const note=gf==='adapt'?document.getElementById('am-note').value.trim():'';
+  const ing=[];
+  document.querySelectorAll('#am-ings .ing-row').forEach(r=>{
+    const n=r.querySelector('.ing-name').value.trim(); if(!n) return;
+    const s=r.querySelector('.ing-store').value;
+    const a=parseFloat(r.querySelector('.ing-amt').value);
+    const u=r.querySelector('.ing-unit').value.trim();
+    ing.push([n,s]);
+    if(!QTY[n]&&!isNaN(a)){ customQty[n]=[a,u||'',0]; QTY[n]=customQty[n]; }  // register a quantity for the grocery list
+  });
+  if(!ing.length){alert('Add at least one ingredient (name required).');return;}
+  const steps=document.getElementById('am-steps').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const meal={name,gf,desc,ing,steps,custom:true};
+  if(note) meal.note=note;
+  (customMeals[di]=customMeals[di]||[]).push(meal);
+  save(); render(); closeModal('addMealModal');
+  if(document.getElementById('panel').classList.contains('show')) buildList();
+}
+function deleteCustomMeal(di,mi){
+  const base=DAYS[di].meals.length, idx=mi-base;
+  if(!customMeals[di]||idx<0||idx>=customMeals[di].length) return;
+  if(!confirm('Delete this dinner option?')) return;
+  customMeals[di].splice(idx,1);
+  if(!customMeals[di].length) delete customMeals[di];
+  if(selections[di]===mi) delete selections[di];        // it was selected — clear that day
+  else if(selections[di]>mi) selections[di]--;          // keep later selection pointing at the right meal
+  save(); render(); closeModal('recipeModal');
+  if(document.getElementById('panel').classList.contains('show')) buildList();
+}
+
 /* ---------- PERSISTENCE ----------
-   Weekly choices reset each week; storePrefs persists (the app's "memory"). */
-function save(){try{localStorage.setItem('mooreMenu',JSON.stringify({selections,thistleNights,householdSel,storePrefs,customItems}));}catch(e){}}
+   Weekly choices reset each week; storePrefs, customMeals & customQty persist (the app's "memory"). */
+function save(){try{localStorage.setItem('mooreMenu',JSON.stringify({selections,thistleNights,householdSel,storePrefs,customItems,customMeals,customQty}));}catch(e){}}
 function load(){try{const s=localStorage.getItem('mooreMenu');if(s){const o=JSON.parse(s);
-  if(o&&o.selections){selections=o.selections;thistleNights=o.thistleNights||{};householdSel=o.householdSel||{};storePrefs=o.storePrefs||{};customItems=o.customItems||[];}
+  if(o&&o.selections){selections=o.selections;thistleNights=o.thistleNights||{};householdSel=o.householdSel||{};storePrefs=o.storePrefs||{};customItems=o.customItems||[];customMeals=o.customMeals||{};customQty=o.customQty||{};}
   else if(o){selections=o;} }}catch(e){}
-  customItems.forEach(c=>HH_DEFAULT[c.n]=c.s); }  // register custom defaults
+  customItems.forEach(c=>HH_DEFAULT[c.n]=c.s);  // register custom household defaults
+  Object.assign(QTY,customQty); }               // re-register quantities for custom meal ingredients
 function resetWeek(){selections={};thistleNights={};householdSel={};save();render();renderHousehold();document.getElementById('panel').classList.remove('show');}
 function resetPrefs(){if(confirm('Forget all learned store choices and go back to defaults?')){storePrefs={};save();renderHousehold();if(document.getElementById('panel').classList.contains('show'))buildList();}}
 
@@ -558,6 +801,11 @@ render();
 // populate the "add item" store dropdown and wire Enter-to-add
 document.getElementById('addstore').innerHTML = STORE_ORDER.map(s=>`<option value="${s}"${s==='Walmart'?' selected':''}>${s}</option>`).join('');
 document.getElementById('addname').addEventListener('keydown',e=>{ if(e.key==='Enter') addCustom(); });
+// show the GF-swap note field only when "Needs a GF swap" is chosen
+document.querySelectorAll('input[name="am-gf"]').forEach(r=>r.addEventListener('change',()=>{
+  document.getElementById('am-note-wrap').style.display=
+    document.querySelector('input[name="am-gf"]:checked').value==='adapt'?'block':'none';
+}));
 renderHousehold();
 </script>
 </body>

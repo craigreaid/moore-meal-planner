@@ -15,6 +15,7 @@ This is guidance for making changes to the Moore Family Meal & Grocery Planner w
 - `DAYS` — array of 7 day objects: `{day, theme, meals:[...]}`. Each meal is `{name, gf, note?, desc, ing:[[item, store], ...]}`.
   - `gf` is `"native"` (GF as written) or `"adapt"` (needs a swap — `note` must explain it).
   - Each ingredient is `[itemName, defaultStore]`; `defaultStore` **must** be a key in `STORES`.
+- `RECIPES` — map of `mealName → [step, step, ...]` (cooking instructions). Keyed by the exact meal `name`; built-in meals look up here. **Add a `RECIPES` entry whenever you add a built-in meal** (custom meals carry their own `steps` instead — see below).
 - `QTY` — map of `itemName → [amount, unit, staple]`, calibrated for a full dinner for 4.
   - `staple: 0` = perishable/protein/produce → amount is multiplied by a serving factor and summed across meals.
   - `staple: 1` = pantry item (oil, spices, sauces) → bought once regardless of how many meals use it.
@@ -29,12 +30,21 @@ This is guidance for making changes to the Moore Family Meal & Grocery Planner w
 - `thistleNights` — day index → true when adults eat Thistle that night.
 - `householdSel` — household/staple item name → true (checked this week).
 - `storePrefs` — item name → preferred store. This is the "learning": a dropdown change writes here and overrides defaults everywhere.
-- `customItems` — user-added items `[{n, s}]`.
-- `save()` / `load()` handle persistence; `resetWeek()` clears weekly choices but **keeps** `storePrefs`; `resetPrefs()` clears learned stores.
+- `customItems` — user-added household items `[{n, s}]`.
+- `customMeals` — day index → array of user-added dinners `[{name, gf, note?, desc, ing, steps, custom:true}]`. Merged into a day's options by `mealsFor(di)`, which returns `DAYS[di].meals.concat(customMeals[di]||[])`. **Selections index into this combined list**, so always use `mealsFor(di)` (not `DAYS[di].meals`) when resolving a selected meal.
+- `customQty` — ingredient name → `[amount, unit, 0]` for ingredients introduced by custom meals. Merged into `QTY` (via `Object.assign(QTY, customQty)`) on load and on save so the grocery list can show quantities. Built-in `QTY` entries are never overwritten.
+- `save()` / `load()` handle persistence (all of the above live under the `mooreMenu` key); `resetWeek()` clears weekly choices but **keeps** `storePrefs`, `customMeals`, and `customQty` (they're part of the "database", not the week); `resetPrefs()` clears learned stores.
+
+## Recipes & custom dinners
+
+- **Viewing a recipe:** every meal renders a "📖 View recipe" button (`button.link[data-recipe]`) that calls `openRecipe(di, mi)`. The handler uses `e.stopPropagation()` so clicking it does **not** also select the meal. Steps come from `m.steps` (custom) or `RECIPES[m.name]` (built-in).
+- **Adding a dinner:** the "➕ Add dinner" toolbar button opens `#addMealModal` via `openAddMeal()`. `saveMeal()` reads the form, builds a meal object (with `custom:true`), pushes it to `customMeals[di]`, and registers any new ingredient quantities into `customQty`/`QTY`.
+- **Deleting a custom dinner:** `deleteCustomMeal(di, mi)` (button shown inside the recipe modal for custom meals) splices it from `customMeals[di]` and **fixes up `selections[di]`** (clears it if it pointed at the deleted meal, decrements it if it pointed later). Built-in meals can't be deleted.
+- **Modals:** generic `openModal(id)` / `closeModal(id)` toggle the `.show` class and lock body scroll; Escape closes both. The recipe viewer (`#recipeModal`) and add-meal form (`#addMealModal`) are plain overlay `<div>`s near the end of the markup.
 
 ## Common changes (recipes)
 
-- **Add/edit a meal:** edit the relevant day's `meals` array in `DAYS`. Ensure each ingredient's store is a valid `STORES` key, and add a `QTY` entry for any new ingredient. Keep it gluten-free or set `gf:"adapt"` with a `note`.
+- **Add/edit a built-in meal:** edit the relevant day's `meals` array in `DAYS`. Ensure each ingredient's store is a valid `STORES` key, add a `QTY` entry for any new ingredient, and add a `RECIPES["<exact meal name>"]` entry with the cooking steps. Keep it gluten-free or set `gf:"adapt"` with a `note`. (End users can add their own dinners from the UI — that path writes to `customMeals`/`customQty`, not `DAYS`/`RECIPES`.)
 - **Add a store:** add it to `STORES` (with a `--color` CSS variable), add it to `STORE_ORDER`, and add a legend `<span>` in the markup.
 - **Add a household/staple item:** add to the appropriate `HOUSEHOLD` category with a valid default store.
 - **Change family size / portions:** edit `ADULTS` and `KIDS`.

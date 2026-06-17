@@ -5,6 +5,8 @@ A simple, repeatable weekly dinner planner with a consolidated, store-by-store g
 ## What it does
 
 - **Alliterative weekly menu** — 7 days, each with a theme (Taco Tuesday, Thai Thursday, etc.) and 5 dinner options to choose from.
+- **Recipes built in** — every meal has a "📖 View recipe" link showing GF notes, the ingredient list with quantities, and step-by-step cooking instructions.
+- **Add your own dinners** — the "➕ Add dinner" button lets you create a new meal (name, description, GF status, ingredients with stores/quantities, and cooking steps). Custom dinners appear as selectable options on their day, flow into the grocery list, and are saved on the device.
 - **Gluten-free aware** — every meal is GF as written or flagged "GF swap" with the exact substitution (a household requirement).
 - **Consolidated grocery list** — pick one dinner per day and the app builds a deduplicated shopping list grouped by store.
 - **Family-of-4 quantities** that scale per meal; pantry staples are treated as buy-once.
@@ -41,7 +43,7 @@ PUBLISH-GUIDE.md  # step-by-step phone/hosting walkthrough
 
 ## Data & limitations
 
-- All selections, household checks, custom items, and learned store choices are saved in the **browser's localStorage** (key: `mooreMenu`). Data lives on each device — **it does not sync between phones yet.**
+- All selections, household checks, custom items, **custom dinners**, and learned store choices are saved in the **browser's localStorage** (key: `mooreMenu`). Data lives on each device — **it does not sync between phones yet.**
 - No backend, no accounts, no real ordering yet.
 
 ## Roadmap
