@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>The Moore Family Weekly Menu Planner</title>
+<!-- Mobile / add-to-home-screen web app -->
+<meta name="theme-color" content="#3f7d58">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Moore Menu">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --ink:#2b2b2b; --muted:#7a756c;
+    --line:#e6e1d8; --accent:#3f7d58; --accent2:#c46b3b; --gf:#2e7d32;
+    --walmart:#0071ce; --wholefoods:#00674b; --smiths:#e4002b; --thistle:#7a5b9a; --amazon:#e8870c;
+    --shadow:0 1px 3px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+  header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:6px}
+  h1{font-size:26px;margin:0;letter-spacing:-.4px}
+  .sub{color:var(--muted);font-size:14px;margin-top:4px}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap}
+  button{font:inherit;cursor:pointer;border:1px solid var(--line);background:#fff;
+    padding:9px 14px;border-radius:10px;color:var(--ink);box-shadow:var(--shadow);transition:.15s}
+  button:hover{transform:translateY(-1px)}
+  button.primary{background:var(--accent);color:#fff;border-color:transparent}
+  button.warn{background:#fff;color:var(--accent2);border-color:var(--accent2)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:14px 0 22px}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+  .day{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 16px 14px;box-shadow:var(--shadow)}
+  .day h2{margin:0 0 2px;font-size:18px}
+  .day .theme{color:var(--accent2);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+  .meals{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  label.meal{display:flex;gap:10px;align-items:flex-start;padding:10px 11px;border:1px solid var(--line);
+    border-radius:11px;cursor:pointer;transition:.12s;background:#fcfbf8}
+  label.meal:hover{border-color:var(--accent);background:#f4f8f4}
+  label.meal.sel{border-color:var(--accent);background:#eef5ee;box-shadow:inset 0 0 0 1px var(--accent)}
+  label.meal input{margin-top:3px}
+  .meal .name{font-weight:600;font-size:14.5px}
+  .meal .desc{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .badge{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:20px;
+    background:#e7f3e8;color:var(--gf);margin-left:6px;vertical-align:middle;letter-spacing:.3px}
+  .badge.adapt{background:#fdf0e6;color:var(--accent2)}
+  /* grocery panel */
+  .panel{margin-top:30px;background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:20px;box-shadow:var(--shadow);display:none}
+  .panel.show{display:block}
+  .panel h2{margin:0 0 4px;font-size:20px}
+  .stores{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;margin-top:16px}
+  .store{border:1px solid var(--line);border-radius:13px;overflow:hidden}
+  .store .head{padding:9px 13px;color:#fff;font-weight:700;font-size:14px;display:flex;justify-content:space-between}
+  .store ul{list-style:none;margin:0;padding:8px 13px 12px}
+  .store li{font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--line);display:flex;align-items:flex-start;gap:8px}
+  .store li:last-child{border-bottom:none}
+  .store li .q{color:var(--muted);font-size:12px}
+  .store li .qty{color:var(--accent);font-weight:600;font-size:13px}
+  label.thistle{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 11px;
+    border:1px dashed var(--thistle);border-radius:10px;font-size:12.5px;color:var(--thistle);
+    cursor:pointer;background:#faf7fc;transition:.12s}
+  label.thistle:hover{background:#f3ecf9}
+  label.thistle.on{background:#efe4f7;font-weight:600;border-style:solid}
+  .tbadge{font-size:11px;font-weight:700;color:#fff;background:var(--thistle);
+    padding:1px 8px;border-radius:20px;vertical-align:middle}
+  /* household */
+  .household{margin-top:30px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+  .household h2{margin:0 0 12px;font-size:19px}
+  .household .hint{font-weight:400;font-size:13px;color:var(--muted)}
+  #hhgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  .hhcat h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent2)}
+  .hhitem{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:5px 8px;border-radius:8px;font-size:13.5px}
+  .hhitem.on{background:#eef5ee}
+  .hhitem label{display:flex;align-items:center;gap:7px;cursor:pointer;flex:1}
+  select.storesel{font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);
+    border-radius:7px;background:#fff;color:var(--ink);cursor:pointer;max-width:118px}
+  .liname{flex:1}
+  .hhtag{font-size:10px;font-weight:700;color:var(--amazon);background:#fdeed8;
+    padding:1px 6px;border-radius:20px;margin-left:4px}
+  .store li{align-items:center}
+  .addrow{display:flex;gap:8px;margin:0 0 16px;flex-wrap:wrap}
+  .addrow input{flex:1;min-width:200px;font:inherit;padding:9px 12px;border:1px solid var(--line);
+    border-radius:10px;background:#fff;color:var(--ink)}
+  .addrow input:focus{outline:none;border-color:var(--accent)}
+  .addrow select{font:inherit;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer}
+  .hhright{display:flex;align-items:center;gap:6px}
+  button.rm{padding:0;width:22px;height:22px;line-height:1;border-radius:50%;border:1px solid var(--line);
+    background:#fff;color:var(--muted);font-size:15px;box-shadow:none}
+  button.rm:hover{transform:none;border-color:var(--accent2);color:var(--accent2)}
+  .store li input{margin-top:2px}
+  .selsummary{margin-top:6px;color:var(--muted);font-size:13px}
+  .empty{color:var(--muted);font-style:italic}
+  footer{margin-top:40px;color:var(--muted);font-size:12px;text-align:center}
+  @media print{
+    .toolbar,.legend,header .sub,footer,.meals label:not(.sel){display:none}
+    .day{break-inside:avoid;box-shadow:none}
+    body{background:#fff}
+    label.meal{border:none;background:none;padding:2px 0}
+    label.thistle:not(.on){display:none}
+    label.thistle.on{border-style:solid}
+    .household,.storesel{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>🍽️ The Moore Family Weekly Menu</h1>
+      <div class="sub">Pick one dinner per day, then build your store-by-store grocery list. All meals are gluten-free or easily made GF.</div>
+    </div>
+    <div class="toolbar">
+      <button class="primary" onclick="buildList()">🛒 Build grocery list</button>
+      <button onclick="window.print()">🖨️ Print menu</button>
+      <button onclick="resetPrefs()" title="Forget learned store choices">↺ Store memory</button>
+      <button class="warn" onclick="resetWeek()">↺ Clear week</button>
+    </div>
+  </header>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--gf)"></span>Gluten-free as written</span>
+    <span><span class="dot" style="background:var(--accent2)"></span>GF with simple swap (note shown)</span>
+    <span><span class="dot" style="background:var(--walmart)"></span>Walmart</span>
+    <span><span class="dot" style="background:var(--wholefoods)"></span>Whole Foods</span>
+    <span><span class="dot" style="background:var(--smiths)"></span>Smiths</span>
+    <span><span class="dot" style="background:var(--amazon)"></span>Amazon</span>
+    <span><span class="dot" style="background:var(--thistle)"></span>🌿 Thistle (adults) — cooks for kids only</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <section class="household">
+    <h2>🧺 Household Goods &amp; Staples <span class="hint">— check what you need this week; pick a store from each dropdown</span></h2>
+    <div class="addrow">
+      <input id="addname" type="text" placeholder="Add your own item — e.g. GF crackers, dog food, foil…" autocomplete="off">
+      <select id="addstore"></select>
+      <button class="primary" onclick="addCustom()">+ Add</button>
+    </div>
+    <div id="hhgrid"></div>
+  </section>
+
+  <div class="panel" id="panel">
+    <h2>🛒 Consolidated Grocery List</h2>
+    <div class="selsummary" id="selsummary"></div>
+    <div class="stores" id="stores"></div>
+  </div>
+
+  <footer>Built for the Moore family • Plan Sunday, shop once, eat all week.</footer>
+</div>
+
+<script>
+/* ---------- STORE CONFIG ---------- */
+const STORES = {
+  "Whole Foods": {color:"var(--wholefoods)", role:"gluten-free specialty, fresh fish & shrimp"},
+  "Smiths":      {color:"var(--smiths)",     role:"meat, produce, dairy & tortillas"},
+  "Walmart":     {color:"var(--walmart)",    role:"pantry & canned goods"},
+  "Amazon":      {color:"var(--amazon)",     role:"household goods, paper & bulk staples"}
+};
+
+/* ---------- MEAL DATABASE ----------
+   gf: "native" = gluten-free as written, "adapt" = needs a swap (note shown)
+   ingredients: [item, store]  (store keys must match STORES) ---------- */
+const DAYS = [
+  {day:"Monday", theme:"Meatball Monday", meals:[
+    {name:"Marvelous Meatballs & Marinara", gf:"adapt", note:"Serve over GF pasta", desc:"Beef-pork meatballs in marinara over gluten-free pasta.",
+      ing:[["Ground beef","Smiths"],["Ground pork","Smiths"],["Marinara sauce","Walmart"],["GF pasta","Whole Foods"],["Parmesan","Smiths"],["Eggs","Smiths"],["Onion","Smiths"],["Garlic","Smiths"]]},
+    {name:"Mediterranean Meatball Bowls", gf:"native", desc:"Herbed beef meatballs over rice with cucumber, tomato & tzatziki.",
+      ing:[["Ground beef","Smiths"],["White rice","Walmart"],["Cucumber","Smiths"],["Tomatoes","Smiths"],["Greek yogurt","Smiths"],["Lemon","Smiths"],["Fresh parsley","Smiths"]]},
+    {name:"Mozzarella-Stuffed Meatball Bake", gf:"native", desc:"Cheesy baked meatballs in tomato sauce — no breadcrumbs.",
+      ing:[["Ground beef","Smiths"],["Mozzarella","Smiths"],["Crushed tomatoes","Walmart"],["Eggs","Smiths"],["Almond flour","Whole Foods"],["Italian seasoning","Walmart"]]},
+    {name:"Maple-Glazed Mini Meatloaves", gf:"adapt", note:"Use GF oats as binder", desc:"Individual maple-glazed meatloaves with mashed potatoes.",
+      ing:[["Ground beef","Smiths"],["GF rolled oats","Whole Foods"],["Maple syrup","Walmart"],["Ketchup","Walmart"],["Potatoes","Smiths"],["Butter","Smiths"]]},
+    {name:"Mushroom & Beef Meatballs (Zoodles)", gf:"native", desc:"Savory meatballs over zucchini noodles in a light gravy.",
+      ing:[["Ground beef","Smiths"],["Mushrooms","Smiths"],["Zucchini","Smiths"],["Beef broth","Walmart"],["Onion","Smiths"]]}
+  ]},
+  {day:"Tuesday", theme:"Taco Tuesday", meals:[
+    {name:"Classic Beef Tacos", gf:"native", desc:"Seasoned beef in corn tortillas with all the toppings.",
+      ing:[["Ground beef","Smiths"],["Corn tortillas","Smiths"],["Taco seasoning","Walmart"],["Cheddar","Smiths"],["Lettuce","Smiths"],["Tomatoes","Smiths"],["Salsa","Walmart"]]},
+    {name:"Tinga Chicken Tacos", gf:"native", desc:"Smoky shredded chicken in chipotle-tomato sauce.",
+      ing:[["Chicken thighs","Smiths"],["Corn tortillas","Smiths"],["Chipotle in adobo","Walmart"],["Crushed tomatoes","Walmart"],["Onion","Smiths"],["Cilantro","Smiths"],["Lime","Smiths"]]},
+    {name:"Tilapia Fish Tacos", gf:"native", desc:"Pan-seared fish with slaw and lime crema.",
+      ing:[["Tilapia fillets","Whole Foods"],["Corn tortillas","Smiths"],["Cabbage","Smiths"],["Lime","Smiths"],["Sour cream","Smiths"],["Cumin","Walmart"]]},
+    {name:"Tex-Mex Taco Salad", gf:"native", desc:"Big bowl of beef, beans, corn, avocado & cheese over greens.",
+      ing:[["Ground beef","Smiths"],["Black beans","Walmart"],["Corn","Walmart"],["Avocado","Smiths"],["Romaine","Smiths"],["Cheddar","Smiths"],["Tortilla chips","Walmart"]]},
+    {name:"Turkey Taco Bowls", gf:"native", desc:"Lean ground turkey over cilantro-lime rice.",
+      ing:[["Ground turkey","Smiths"],["White rice","Walmart"],["Black beans","Walmart"],["Lime","Smiths"],["Cilantro","Smiths"],["Salsa","Walmart"]]}
+  ]},
+  {day:"Wednesday", theme:"Wok Wednesday", meals:[
+    {name:"Wok Chicken Stir-Fry", gf:"adapt", note:"Use tamari instead of soy sauce", desc:"Chicken & crisp veggies in a tamari-ginger sauce over rice.",
+      ing:[["Chicken breast","Smiths"],["Tamari (GF)","Whole Foods"],["Mixed stir-fry veg","Smiths"],["White rice","Walmart"],["Ginger","Smiths"],["Garlic","Smiths"]]},
+    {name:"Walnut Shrimp", gf:"adapt", note:"Use cornstarch coating", desc:"Crispy shrimp with candied walnuts in creamy sauce.",
+      ing:[["Shrimp","Whole Foods"],["Walnuts","Walmart"],["Cornstarch","Walmart"],["Mayonnaise","Walmart"],["Honey","Walmart"],["White rice","Walmart"]]},
+    {name:"Wok Beef & Broccoli", gf:"adapt", note:"Use tamari instead of soy sauce", desc:"Tender beef strips and broccoli in glossy garlic sauce.",
+      ing:[["Beef sirloin","Smiths"],["Broccoli","Smiths"],["Tamari (GF)","Whole Foods"],["Cornstarch","Walmart"],["Garlic","Smiths"],["White rice","Walmart"]]},
+    {name:"Wonderful Veggie Fried Rice", gf:"adapt", note:"Use tamari instead of soy sauce", desc:"Day-after fried rice loaded with veg and egg.",
+      ing:[["White rice","Walmart"],["Eggs","Smiths"],["Frozen peas & carrots","Walmart"],["Tamari (GF)","Whole Foods"],["Green onion","Smiths"],["Sesame oil","Whole Foods"]]},
+    {name:"Wok Pork & Peppers", gf:"adapt", note:"Use tamari instead of soy sauce", desc:"Quick pork stir-fry with bell peppers and onion.",
+      ing:[["Pork loin","Smiths"],["Bell peppers","Smiths"],["Onion","Smiths"],["Tamari (GF)","Whole Foods"],["White rice","Walmart"]]}
+  ]},
+  {day:"Thursday", theme:"Thai Thursday", meals:[
+    {name:"Thai Chicken Curry", gf:"native", desc:"Coconut red curry with chicken and vegetables over rice.",
+      ing:[["Chicken thighs","Smiths"],["Red curry paste","Whole Foods"],["Coconut milk","Whole Foods"],["Bell peppers","Smiths"],["White rice","Walmart"],["Basil","Smiths"]]},
+    {name:"Thai Peanut Noodles", gf:"native", desc:"Rice noodles tossed in creamy peanut sauce with veg.",
+      ing:[["Rice noodles","Whole Foods"],["Peanut butter","Walmart"],["Tamari (GF)","Whole Foods"],["Lime","Smiths"],["Carrots","Smiths"],["Green onion","Smiths"]]},
+    {name:"Thai Basil Beef (Pad Krapow)", gf:"adapt", note:"Use tamari & GF fish sauce", desc:"Spicy stir-fried beef with basil over rice and a fried egg.",
+      ing:[["Ground beef","Smiths"],["Thai basil","Smiths"],["Tamari (GF)","Whole Foods"],["Fish sauce","Whole Foods"],["Eggs","Smiths"],["White rice","Walmart"]]},
+    {name:"Thai Coconut Shrimp Soup (Tom Kha)", gf:"native", desc:"Fragrant coconut-lime broth with shrimp and mushrooms.",
+      ing:[["Shrimp","Whole Foods"],["Coconut milk","Whole Foods"],["Mushrooms","Smiths"],["Lime","Smiths"],["Ginger","Smiths"],["Cilantro","Smiths"]]},
+    {name:"Thai Turkey Lettuce Wraps", gf:"adapt", note:"Use tamari instead of soy sauce", desc:"Savory turkey larb-style filling in crisp lettuce cups.",
+      ing:[["Ground turkey","Smiths"],["Butter lettuce","Smiths"],["Tamari (GF)","Whole Foods"],["Lime","Smiths"],["Mint","Smiths"],["Carrots","Smiths"]]}
+  ]},
+  {day:"Friday", theme:"Fish & Fajita Friday", meals:[
+    {name:"Chicken Fajitas", gf:"native", desc:"Sizzling peppers, onions & chicken in corn tortillas.",
+      ing:[["Chicken breast","Smiths"],["Bell peppers","Smiths"],["Onion","Smiths"],["Corn tortillas","Smiths"],["Fajita seasoning","Walmart"],["Lime","Smiths"]]},
+    {name:"Foil-Pack Salmon & Veggies", gf:"native", desc:"Lemon-herb salmon roasted with asparagus and potatoes.",
+      ing:[["Salmon fillets","Whole Foods"],["Asparagus","Smiths"],["Baby potatoes","Smiths"],["Lemon","Smiths"],["Butter","Smiths"],["Garlic","Smiths"]]},
+    {name:"Crispy Fish & Fries", gf:"adapt", note:"Use GF flour/panko", desc:"GF-battered white fish with oven fries.",
+      ing:[["Cod fillets","Whole Foods"],["GF flour blend","Whole Foods"],["Frozen fries","Walmart"],["Eggs","Smiths"],["Lemon","Smiths"]]},
+    {name:"Shrimp Fajitas", gf:"native", desc:"Garlicky shrimp with peppers in corn tortillas.",
+      ing:[["Shrimp","Whole Foods"],["Bell peppers","Smiths"],["Onion","Smiths"],["Corn tortillas","Smiths"],["Fajita seasoning","Walmart"],["Lime","Smiths"]]},
+    {name:"GF Flatbread Pizzas", gf:"adapt", note:"Use GF flatbread/crust", desc:"Make-your-own gluten-free flatbread pizzas.",
+      ing:[["GF flatbread","Whole Foods"],["Pizza sauce","Walmart"],["Mozzarella","Smiths"],["Pepperoni","Smiths"],["Bell peppers","Smiths"]]}
+  ]},
+  {day:"Saturday", theme:"Sizzle Saturday", meals:[
+    {name:"Sizzling Steak & Potatoes", gf:"native", desc:"Grilled steak with roasted potatoes and salad.",
+      ing:[["Ribeye steaks","Smiths"],["Baby potatoes","Smiths"],["Salad greens","Smiths"],["Butter","Smiths"],["Garlic","Smiths"]]},
+    {name:"Smoky BBQ Chicken", gf:"adapt", note:"Use GF BBQ sauce", desc:"Grilled chicken glazed with gluten-free BBQ sauce.",
+      ing:[["Chicken thighs","Smiths"],["GF BBQ sauce","Whole Foods"],["Corn on the cob","Smiths"],["Coleslaw mix","Smiths"]]},
+    {name:"Sausage & Peppers Skillet", gf:"native", desc:"Italian sausage with peppers and onions.",
+      ing:[["Italian sausage","Smiths"],["Bell peppers","Smiths"],["Onion","Smiths"],["White rice","Walmart"]]},
+    {name:"Salmon Sliders", gf:"adapt", note:"Use GF buns or lettuce", desc:"Salmon patties on GF buns with slaw.",
+      ing:[["Salmon fillets","Whole Foods"],["GF buns","Whole Foods"],["Coleslaw mix","Smiths"],["Mayonnaise","Walmart"],["Lemon","Smiths"]]},
+    {name:"Shrimp Skewers", gf:"native", desc:"Grilled marinated shrimp skewers with veggies.",
+      ing:[["Shrimp","Whole Foods"],["Zucchini","Smiths"],["Cherry tomatoes","Smiths"],["Bell peppers","Smiths"],["Olive oil","Walmart"]]}
+  ]},
+  {day:"Sunday", theme:"Slow-Cooker Sunday", meals:[
+    {name:"Slow-Cooker Pot Roast", gf:"native", desc:"Fall-apart beef roast with carrots and potatoes.",
+      ing:[["Chuck roast","Smiths"],["Carrots","Smiths"],["Potatoes","Smiths"],["Onion","Smiths"],["Beef broth","Walmart"]]},
+    {name:"Slow-Cooker Salsa Chicken", gf:"native", desc:"Three-ingredient shredded salsa chicken over rice.",
+      ing:[["Chicken breast","Smiths"],["Salsa","Walmart"],["White rice","Walmart"],["Cheddar","Smiths"],["Black beans","Walmart"]]},
+    {name:"Sheet-Pan Sausage & Veggies", gf:"native", desc:"Roasted sausage with sweet potato and Brussels sprouts.",
+      ing:[["Smoked sausage","Smiths"],["Sweet potatoes","Smiths"],["Brussels sprouts","Smiths"],["Olive oil","Walmart"]]},
+    {name:"Slow-Cooker Pulled Pork", gf:"adapt", note:"Use GF BBQ sauce / GF buns", desc:"Tender pulled pork with slaw.",
+      ing:[["Pork shoulder","Smiths"],["GF BBQ sauce","Whole Foods"],["Coleslaw mix","Smiths"],["GF buns","Whole Foods"]]},
+    {name:"Savory Slow-Cooker Chili", gf:"native", desc:"Hearty beef and bean chili with cornbread optional.",
+      ing:[["Ground beef","Smiths"],["Kidney beans","Walmart"],["Crushed tomatoes","Walmart"],["Onion","Smiths"],["Chili powder","Walmart"],["Cheddar","Smiths"]]}
+  ]}
+];
+
+const STORE_ORDER = ["Smiths","Whole Foods","Walmart","Amazon"];
+let selections = {};     // day -> meal index
+let thistleNights = {};  // day -> true when adults eat Thistle (cook for kids only)
+let householdSel = {};   // household/staple item name -> true (needed this week)
+let storePrefs = {};     // item name -> preferred store (learned override)
+let customItems = [];    // user-added items: {n:name, s:default store}
+
+/* ---------- FAMILY-OF-4 QUANTITIES ----------
+   [amount, unit, staple]  amount = per single dinner for 4 people.
+   staple:1 = pantry item you buy once (not multiplied across meals).
+   Perishables/proteins/produce have staple:0 and are summed per meal. ---------- */
+const SERVES = 4;
+const QTY = {
+  // proteins
+  "Ground beef":[1.5,"lb",0],"Ground pork":[0.5,"lb",0],"Ground turkey":[1.5,"lb",0],
+  "Chicken breast":[2,"lb",0],"Chicken thighs":[2,"lb",0],"Beef sirloin":[1.5,"lb",0],
+  "Ribeye steaks":[2,"lb",0],"Chuck roast":[3,"lb",0],"Pork loin":[1.5,"lb",0],
+  "Pork shoulder":[3,"lb",0],"Italian sausage":[1.5,"lb",0],"Smoked sausage":[1.5,"lb",0],
+  "Shrimp":[1.5,"lb",0],"Salmon fillets":[1.5,"lb",0],"Cod fillets":[1.5,"lb",0],
+  "Tilapia fillets":[1.5,"lb",0],"Pepperoni":[1,"pkg",0],
+  // produce
+  "Bell peppers":[3,"each",0],"Onion":[2,"each",0],"Garlic":[1,"head",1],"Ginger":[1,"knob",1],
+  "Tomatoes":[3,"each",0],"Cherry tomatoes":[1,"pint",0],"Cucumber":[1,"each",0],
+  "Lettuce":[1,"head",0],"Romaine":[1,"head",0],"Butter lettuce":[2,"heads",0],"Salad greens":[1,"bag",0],
+  "Cabbage":[0.5,"head",0],"Coleslaw mix":[1,"bag",0],"Avocado":[2,"each",0],
+  "Carrots":[1,"lb",0],"Broccoli":[1.5,"lb",0],"Brussels sprouts":[1,"lb",0],"Asparagus":[1,"lb",0],
+  "Zucchini":[2,"each",0],"Mushrooms":[8,"oz",0],"Potatoes":[2,"lb",0],"Baby potatoes":[1.5,"lb",0],
+  "Sweet potatoes":[2,"lb",0],"Corn on the cob":[4,"ears",0],"Mixed stir-fry veg":[1,"lb",0],
+  "Lemon":[2,"each",0],"Lime":[3,"each",0],"Cilantro":[1,"bunch",0],"Fresh parsley":[1,"bunch",0],
+  "Basil":[1,"bunch",0],"Thai basil":[1,"bunch",0],"Mint":[1,"bunch",0],"Green onion":[1,"bunch",0],
+  // dairy & eggs
+  "Cheddar":[8,"oz",0],"Mozzarella":[8,"oz",0],"Parmesan":[4,"oz",0],"Greek yogurt":[1,"cup",0],
+  "Sour cream":[1,"cup",0],"Butter":[0.5,"cup",1],"Eggs":[4,"each",0],
+  // grains / GF specialty
+  "White rice":[2,"cups",0],"GF pasta":[1,"box",0],"Rice noodles":[1,"pkg",0],
+  "Corn tortillas":[1,"pkg (12)",0],"GF buns":[1,"pkg (8)",0],"GF flatbread":[1,"pkg (4)",0],
+  "GF flour blend":[1,"bag",1],"GF rolled oats":[1,"bag",1],"Almond flour":[1,"bag",1],
+  "Tortilla chips":[1,"bag",0],"Frozen fries":[1,"bag",0],"Frozen peas & carrots":[1,"bag",0],
+  "Walnuts":[1,"cup",0],
+  // canned / jarred / pantry
+  "Marinara sauce":[1,"jar",0],"Crushed tomatoes":[1,"can (28oz)",0],"Pizza sauce":[1,"jar",0],
+  "Salsa":[1,"jar",0],"Black beans":[1,"can",0],"Kidney beans":[2,"cans",0],"Corn":[1,"can",0],
+  "Coconut milk":[1,"can",0],"Chipotle in adobo":[1,"can",0],"Beef broth":[4,"cups",0],
+  "Red curry paste":[1,"jar",1],"Tamari (GF)":[1,"bottle",1],"Fish sauce":[1,"bottle",1],
+  "Peanut butter":[1,"jar",1],"GF BBQ sauce":[1,"bottle",1],"Mayonnaise":[1,"jar",1],
+  "Ketchup":[1,"bottle",1],"Honey":[1,"bottle",1],"Maple syrup":[1,"bottle",1],
+  "Olive oil":[1,"bottle",1],"Sesame oil":[1,"bottle",1],"Cornstarch":[1,"pkg",1],
+  // seasonings (buy once)
+  "Taco seasoning":[1,"pkg",1],"Fajita seasoning":[1,"pkg",1],"Italian seasoning":[1,"jar",1],
+  "Chili powder":[1,"jar",1],"Cumin":[1,"jar",1]
+};
+/* ---------- SERVINGS ----------
+   QTY amounts are calibrated for FULL servings. On a Thistle night the two
+   adults eat Thistle, so the cooked dinner only needs to feed the kids. */
+const ADULTS=2, KIDS=2, FULL=ADULTS+KIDS;
+// factor = total servings needed / FULL ; meals = how many selected meals use the item
+function fmtQty(item,factor,meals){
+  const q=QTY[item];
+  if(!q) return "";
+  const [amt,unit,staple]=q;
+  if(staple) return amt+" "+unit + (meals>1?" <span class='q'>(covers "+meals+" meals)</span>":"");
+  let total=+(amt*factor).toFixed(2);
+  return total+" "+unit + (meals>1?" <span class='q'>("+meals+" meals)</span>":"");
+}
+
+/* ---------- HOUSEHOLD GOODS ----------
+   Non-food items. Default store shown; user can change via dropdown and it sticks. */
+const HOUSEHOLD = [
+  {cat:"Dairy & Fridge", items:[
+    {n:"Milk",s:"Smiths"},{n:"Eggs",s:"Smiths"},{n:"Butter",s:"Smiths"},
+    {n:"Greek yogurt",s:"Smiths"},{n:"Shredded cheese",s:"Smiths"},{n:"Orange juice",s:"Smiths"}]},
+  {cat:"Bread & Breakfast (GF)", items:[
+    {n:"GF bread",s:"Whole Foods"},{n:"GF bagels",s:"Whole Foods"},{n:"GF cereal",s:"Whole Foods"},
+    {n:"Oatmeal",s:"Walmart"},{n:"Coffee",s:"Walmart"}]},
+  {cat:"Produce Staples", items:[
+    {n:"Bananas",s:"Smiths"},{n:"Apples",s:"Smiths"},{n:"Yellow onions",s:"Smiths"},
+    {n:"Garlic",s:"Smiths"},{n:"Lemons",s:"Smiths"},{n:"Baby carrots",s:"Smiths"}]},
+  {cat:"Pantry Staples", items:[
+    {n:"Olive oil",s:"Walmart"},{n:"White rice",s:"Walmart"},{n:"GF flour blend",s:"Whole Foods"},
+    {n:"Honey",s:"Walmart"},{n:"Peanut butter",s:"Walmart"},{n:"Black beans",s:"Walmart"}]},
+  {cat:"Paper & Disposables", items:[
+    {n:"Paper towels",s:"Amazon"},{n:"Toilet paper",s:"Amazon"},{n:"Facial tissues",s:"Amazon"},
+    {n:"Napkins",s:"Walmart"},{n:"Paper plates",s:"Walmart"}]},
+  {cat:"Kitchen Wraps & Bags", items:[
+    {n:"Aluminum foil",s:"Walmart"},{n:"Plastic wrap",s:"Walmart"},{n:"Parchment paper",s:"Walmart"},
+    {n:"Sandwich bags",s:"Walmart"},{n:"Gallon freezer bags",s:"Walmart"},{n:"Trash bags",s:"Amazon"}]},
+  {cat:"Cleaning", items:[
+    {n:"Dish soap",s:"Walmart"},{n:"Dishwasher pods",s:"Amazon"},{n:"All-purpose cleaner",s:"Walmart"},
+    {n:"Disinfecting wipes",s:"Amazon"},{n:"Glass cleaner",s:"Walmart"},{n:"Sponges",s:"Walmart"}]},
+  {cat:"Laundry", items:[
+    {n:"Laundry detergent",s:"Amazon"},{n:"Dryer sheets",s:"Amazon"},{n:"Stain remover",s:"Walmart"}]},
+  {cat:"Personal Care", items:[
+    {n:"Toothpaste",s:"Walmart"},{n:"Toothbrushes",s:"Amazon"},{n:"Shampoo",s:"Whole Foods"},
+    {n:"Conditioner",s:"Whole Foods"},{n:"Body wash",s:"Walmart"},{n:"Hand soap",s:"Walmart"},
+    {n:"Deodorant",s:"Walmart"}]},
+  {cat:"Health & Misc", items:[
+    {n:"Vitamins",s:"Whole Foods"},{n:"Pain reliever",s:"Walmart"},{n:"Bandages",s:"Walmart"},
+    {n:"Batteries (AA)",s:"Amazon"},{n:"Light bulbs",s:"Amazon"},{n:"Storage containers",s:"Amazon"}]}
+];
+// default store for any household item
+const HH_DEFAULT={}; HOUSEHOLD.forEach(c=>c.items.forEach(i=>HH_DEFAULT[i.n]=i.s));
+
+// store preference: returns the learned/chosen store for an item, else its default
+function storeFor(item,def){ return storePrefs[item]||def; }
+// build a store <select> for an item (used in household list + grocery list)
+function storeSelect(item,current){
+  const safe=item.replace(/"/g,'&quot;');
+  return `<select class="storesel" data-item="${safe}">`
+    + STORE_ORDER.map(s=>`<option value="${s}"${s===current?' selected':''}>${s}</option>`).join('')
+    + `</select>`;
+}
+
+/* ---------- RENDER HOUSEHOLD ---------- */
+function renderHousehold(){
+  const wrap=document.getElementById('hhgrid');
+  let html='';
+  HOUSEHOLD.forEach(c=>{
+    html+=`<div class="hhcat"><h3>${c.cat}</h3>`;
+    c.items.forEach(it=>{
+      const cur=storeFor(it.n,it.s);
+      const on=householdSel[it.n]?'on':'';
+      html+=`<div class="hhitem ${on}">
+        <label><input type="checkbox" data-hh="${it.n.replace(/"/g,'&quot;')}" ${on?'checked':''}> ${it.n}</label>
+        ${storeSelect(it.n,cur)}</div>`;
+    });
+    html+='</div>';
+  });
+  // user-added items
+  if(customItems.length){
+    html+=`<div class="hhcat"><h3>Your Items</h3>`;
+    customItems.forEach((it,idx)=>{
+      const cur=storeFor(it.n,it.s);
+      const on=householdSel[it.n]?'on':'';
+      const safe=it.n.replace(/"/g,'&quot;');
+      html+=`<div class="hhitem ${on}">
+        <label><input type="checkbox" data-hh="${safe}" ${on?'checked':''}> ${it.n}</label>
+        <span class="hhright">${storeSelect(it.n,cur)}<button class="rm" data-rm="${idx}" title="Remove">×</button></span></div>`;
+    });
+    html+='</div>';
+  }
+  wrap.innerHTML=html;
+  wrap.querySelectorAll('input[data-hh]').forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      const n=cb.dataset.hh;
+      if(cb.checked) householdSel[n]=true; else delete householdSel[n];
+      save(); renderHousehold();
+      if(document.getElementById('panel').classList.contains('show')) buildList();
+    });
+  });
+  wrap.querySelectorAll('button[data-rm]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const idx=+b.dataset.rm, nm=customItems[idx].n;
+      customItems.splice(idx,1);
+      delete householdSel[nm]; delete storePrefs[nm]; delete HH_DEFAULT[nm];
+      save(); renderHousehold();
+      if(document.getElementById('panel').classList.contains('show')) buildList();
+    });
+  });
+  bindStoreSelects(wrap);
+}
+// add a custom item from the input row
+function addCustom(){
+  const inp=document.getElementById('addname'), st=document.getElementById('addstore');
+  const name=inp.value.trim(); if(!name) return;
+  if(!customItems.some(c=>c.n.toLowerCase()===name.toLowerCase())){
+    customItems.push({n:name,s:st.value});
+    HH_DEFAULT[name]=st.value;
+  }
+  householdSel[name]=true;
+  inp.value='';
+  save(); renderHousehold();
+  if(document.getElementById('panel').classList.contains('show')) buildList();
+}
+// wire up any store dropdowns within a container
+function bindStoreSelects(scope){
+  scope.querySelectorAll('select.storesel').forEach(sel=>{
+    sel.addEventListener('change',()=>{
+      storePrefs[sel.dataset.item]=sel.value;
+      save(); renderHousehold();
+      if(document.getElementById('panel').classList.contains('show')) buildList();
+    });
+  });
+}
+
+/* ---------- RENDER DAYS ---------- */
+function render(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  DAYS.forEach((d,di)=>{
+    const card = document.createElement('div');
+    card.className = 'day';
+    let html = `<div class="theme">${d.theme}</div><h2>${d.day}${thistleNights[di]?' <span class="tbadge">🌿 Thistle</span>':''}</h2><div class="meals">`;
+    d.meals.forEach((m,mi)=>{
+      const sel = selections[di]===mi ? 'sel':'';
+      const badge = m.gf==='native'
+        ? `<span class="badge">GF</span>`
+        : `<span class="badge adapt" title="${m.note||''}">GF swap</span>`;
+      html += `<label class="meal ${sel}" data-d="${di}" data-m="${mi}">
+        <input type="radio" name="day${di}" ${sel?'checked':''}>
+        <span><span class="name">${m.name}${badge}</span>
+        <span class="desc">${m.desc}${m.gf==='adapt'?' <em>('+m.note+')</em>':''}</span></span>
+      </label>`;
+    });
+    html += '</div>';
+    const on = thistleNights[di] ? 'on' : '';
+    html += `<label class="thistle ${on}" data-tog="${di}">
+      <input type="checkbox" ${on?'checked':''}> 🌿 Adults on Thistle — cook for kids only (serves ${KIDS})</label>`;
+    card.innerHTML = html;
+    grid.appendChild(card);
+  });
+  document.querySelectorAll('label.meal').forEach(l=>{
+    l.addEventListener('click',()=>{
+      const di=+l.dataset.d, mi=+l.dataset.m;
+      selections[di]=mi; save(); render();
+    });
+  });
+  document.querySelectorAll('label.thistle input').forEach(inp=>{
+    inp.addEventListener('change',()=>{
+      const di=+inp.closest('label.thistle').dataset.tog;
+      if(inp.checked) thistleNights[di]=true; else delete thistleNights[di];
+      save(); render();
+    });
+  });
+}
+
+/* ---------- GROCERY LIST ---------- */
+function buildList(){
+  const panel=document.getElementById('panel');
+  const sel=document.getElementById('selsummary');
+  const wrap=document.getElementById('stores');
+  const chosen=Object.keys(selections);
+  const hhItems=Object.keys(householdSel);
+  if(chosen.length===0 && hhItems.length===0){
+    panel.classList.add('show');
+    sel.innerHTML='<span class="empty">Pick at least one dinner above (or check some household goods), then build your list.</span>';
+    wrap.innerHTML=''; panel.scrollIntoView({behavior:'smooth'}); return;
+  }
+  // aggregate ingredients by store; track serving-factor (for amounts) + meal count
+  const byStore={};
+  let summaryParts=[], thistleCount=0;
+  chosen.forEach(di=>{
+    const meal=DAYS[di].meals[selections[di]];
+    const isThistle=!!thistleNights[di];
+    const serves=isThistle?KIDS:FULL;
+    const factor=serves/FULL;
+    if(isThistle) thistleCount++;
+    summaryParts.push(`<strong>${DAYS[di].day}:</strong> ${meal.name}${isThistle?' <span class="q">(kids only · adults on Thistle)</span>':''}`);
+    meal.ing.forEach(([item,defStore])=>{
+      const store=storeFor(item,defStore);
+      byStore[store]=byStore[store]||{};
+      byStore[store][item]=byStore[store][item]||{factor:0,meals:0,hh:false};
+      byStore[store][item].factor+=factor;
+      byStore[store][item].meals+=1;
+    });
+  });
+  // add checked household goods (no serving scaling)
+  hhItems.forEach(item=>{
+    const store=storeFor(item,HH_DEFAULT[item]||"Walmart");
+    byStore[store]=byStore[store]||{};
+    byStore[store][item]=byStore[store][item]||{factor:0,meals:0,hh:true};
+    byStore[store][item].hh=true;
+  });
+  const head=`<strong>Quantities scale to who's eating</strong> — full nights serve ${FULL}, Thistle-adult nights serve ${KIDS} (kids). `
+    + (thistleCount?`${thistleCount} Thistle night${thistleCount>1?'s':''} this week. `:'')
+    + `<span class="q">Use the dropdown on any item to change where you buy it — it'll remember.</span>`;
+  sel.innerHTML=head+(summaryParts.length?'<br>This week: '+summaryParts.join(' &nbsp;•&nbsp; '):'');
+  let html='';
+  STORE_ORDER.forEach(store=>{
+    if(!byStore[store])return;
+    const items=Object.keys(byStore[store]).sort();
+    html+=`<div class="store"><div class="head" style="background:${STORES[store].color}">
+      <span>${store}</span><span style="font-weight:400;font-size:11px;opacity:.9">${items.length} items</span></div><ul>`;
+    items.forEach(it=>{
+      const o=byStore[store][it];
+      const isFood=o.meals>0;
+      const q=isFood?fmtQty(it,o.factor,o.meals):'';
+      const tag=(!isFood&&o.hh)?' <span class="hhtag">staple</span>':'';
+      html+=`<li><input type="checkbox"><span class="liname">${it}${tag}${q?` — <span class="qty">${q}</span>`:''}</span>${storeSelect(it,store)}</li>`;
+    });
+    html+='</ul></div>';
+  });
+  wrap.innerHTML=html;
+  bindStoreSelects(wrap);
+  panel.classList.add('show');
+  panel.scrollIntoView({behavior:'smooth'});
+}
+
+/* ---------- PERSISTENCE ----------
+   Weekly choices reset each week; storePrefs persists (the app's "memory"). */
+function save(){try{localStorage.setItem('mooreMenu',JSON.stringify({selections,thistleNights,householdSel,storePrefs,customItems}));}catch(e){}}
+function load(){try{const s=localStorage.getItem('mooreMenu');if(s){const o=JSON.parse(s);
+  if(o&&o.selections){selections=o.selections;thistleNights=o.thistleNights||{};householdSel=o.householdSel||{};storePrefs=o.storePrefs||{};customItems=o.customItems||[];}
+  else if(o){selections=o;} }}catch(e){}
+  customItems.forEach(c=>HH_DEFAULT[c.n]=c.s); }  // register custom defaults
+function resetWeek(){selections={};thistleNights={};householdSel={};save();render();renderHousehold();document.getElementById('panel').classList.remove('show');}
+function resetPrefs(){if(confirm('Forget all learned store choices and go back to defaults?')){storePrefs={};save();renderHousehold();if(document.getElementById('panel').classList.contains('show'))buildList();}}
+
+load();
+render();
+// populate the "add item" store dropdown and wire Enter-to-add
+document.getElementById('addstore').innerHTML = STORE_ORDER.map(s=>`<option value="${s}"${s==='Walmart'?' selected':''}>${s}</option>`).join('');
+document.getElementById('addname').addEventListener('keydown',e=>{ if(e.key==='Enter') addCustom(); });
+renderHousehold();
+</script>
+</body>
+</html>

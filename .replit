@@ -1,0 +1,9 @@
+# Replit configuration for a static single-page site.
+# "Run" serves the folder locally for preview.
+run = "python3 -m http.server 8080"
+
+# For a public URL, use Replit's Deploy button and choose a Static deployment
+# with the public directory set to "." (this repo root). Replit serves index.html.
+[deployment]
+deploymentTarget = "static"
+publicDir = "."

@@ -1,0 +1,15 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Node (only if a backend is added later)
+node_modules/
+npm-debug.log*
+
+# Replit local state
+.replit.local
+.config/
+.upm/
