@@ -1,9 +1,18 @@
-# Replit configuration for a static single-page site.
-# "Run" serves the folder locally for preview.
-run = "python3 -m http.server 8080"
+# Replit configuration — Node server with shared login + live sync.
+# "Run" starts the server for previewing inside the workspace.
+run = "npm start"
 
-# For a public URL, use Replit's Deploy button and choose a Static deployment
-# with the public directory set to "." (this repo root). Replit serves index.html.
+# Node module system for the toolchain.
+modules = ["nodejs-20"]
+
+# Map the server's internal port to the public web port.
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+# Deploy as an always-on Reserved VM so the live (WebSocket) connection
+# stays up. In the Deploy panel choose "Reserved VM" and this run command.
+# Set Secrets first: FAMILY_PASSWORD and SESSION_SECRET.
 [deployment]
-deploymentTarget = "static"
-publicDir = "."
+deploymentTarget = "vm"
+run = ["npm", "start"]

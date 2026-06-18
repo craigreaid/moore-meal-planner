@@ -4,9 +4,20 @@ This is guidance for making changes to the Moore Family Meal & Grocery Planner w
 
 ## The big picture
 
-- **Everything is in `index.html`.** One self-contained file: HTML markup, a `<style>` block, and a `<script>` block of vanilla JavaScript. No frameworks, no build step, no npm, no dependencies.
-- Keep it that way unless explicitly asked. The single-file design is what makes hosting and deployment trivial.
-- Test by opening `index.html` in a browser (or `python3 -m http.server`). Check the browser console for errors, then verify the menu renders, the grocery list builds, and quantities scale.
+- **Frontend is `index.html`** — one self-contained page: HTML markup, a `<style>` block, and a `<script>` block of vanilla JavaScript (no framework, no build step). Keep the frontend a single file unless there's a strong reason not to.
+- **Backend is `server.js`** (Node + Express + `ws`) with `lib/store.js` for storage. It serves `index.html`, handles a single shared family login, holds one shared household record, and pushes live updates to every device over a WebSocket. Dependencies: `express`, `ws` only.
+- **Storage** (`lib/store.js`): the Replit Database in production (auto-detected via `REPLIT_DB_URL`), or a local `.data/household.json` file in development. Same `getHousehold()` / `saveHousehold()` API either way.
+- **Run/test locally:** `npm install` then `npm start` → http://localhost:3000. Dev login password defaults to `moorefamily` (override with the `FAMILY_PASSWORD` env var). Check the browser console for errors, then verify: login gate works, the menu renders, the grocery list builds, quantities scale, and the sync pill shows "Synced".
+- **Deploy:** Replit **Reserved VM** (always-on, for the WebSocket). See `DEPLOY-SYNC.md`. Secrets: `FAMILY_PASSWORD`, `SESSION_SECRET`.
+
+## Sync & login (how the shared state flows)
+
+- The whole shared record is the same object as before — `{selections, thistleNights, householdSel, storePrefs, customItems, customMeals, customQty}` (plus server-managed `rev`/`updatedAt`). `collectDoc()` bundles it; `assignDoc(o)` loads it into the module vars (and re-registers `HH_DEFAULT` + `QTY`).
+- **`save()`** writes the localStorage cache, marks `dirty`, and `flush()`es to the server over the WebSocket (unless offline or `awaitingAck` — then it flushes later). All existing call sites keep working unchanged.
+- **`applyDoc(doc)`** applies an authoritative copy received from the server and re-renders. Incoming `state` messages are ignored while `awaitingAck` (so a change you just sent isn't clobbered by an older broadcast).
+- **`load()`** still loads the localStorage cache for an instant first paint; the server's `state` message then replaces it once connected.
+- **Auth:** `initSync()` calls `/api/me`; if signed in → `startApp()` (connect WS), else `showLogin()`. If there's no server at all (e.g. file opened directly), it falls back to local-only mode. Login posts to `/api/login`; the server sets a signed httpOnly session cookie. The password is checked server-side against the `FAMILY_PASSWORD` secret — never shipped to the client.
+- **Server (`server.js`):** on each `update` it bumps `rev`, persists, broadcasts `state` to *other* clients, and `ack`s the sender. Last-write-wins; fine for a small household.
 
 ## Data structures (all near the top of the `<script>`)
 
@@ -54,9 +65,9 @@ This is guidance for making changes to the Moore Family Meal & Grocery Planner w
 - Gluten-free is a hard requirement (one parent is GF) — never introduce a meal that can't be made GF.
 - Store keys are strings and must match exactly across `STORES`, `STORE_ORDER`, meal `ing`, and `HOUSEHOLD` defaults.
 - The grocery list shows a quantity for items used in meals; checked staples with no meal use show a "staple" tag instead.
-- Data is browser-local only — there is no backend yet. Don't add code that assumes a server unless building the sync milestone.
+- Data syncs through the server, with localStorage as a per-device cache. When you add a new piece of saved state, add it to **both** `collectDoc()` and `assignDoc()` (and to `defaultDoc()` in `server.js`) so it syncs and persists — not just to localStorage.
 - After any data edit, sanity-check that every meal ingredient resolves to a valid store and has a QTY entry.
 
 ## Roadmap context
 
-Current = static single-file app. Next milestones (not built yet): a backend + database for cross-device sync and a family login, then an Instacart integration to turn the grocery list into a real cart.
+Done: static single-file app → backend + shared family login + live cross-device sync (current). Next milestones (not built yet): an Instacart integration to turn the grocery list into a real cart, and optionally per-person accounts within the household.

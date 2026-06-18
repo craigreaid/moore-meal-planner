@@ -1,6 +1,6 @@
 # Moore Family Meal & Grocery Planner
 
-A simple, repeatable weekly dinner planner with a consolidated, store-by-store grocery list. Built as a single, self-contained web page — no build step, no dependencies, works offline once loaded.
+A repeatable weekly dinner planner with a consolidated, store-by-store grocery list. The app is a single self-contained web page (`index.html`) backed by a small Node server that provides a **shared family login** and **live sync** — changes made on one phone or computer show up on everyone's devices within about a second.
 
 ## What it does
 
@@ -14,40 +14,53 @@ A simple, repeatable weekly dinner planner with a consolidated, store-by-store g
 - **Household goods & staples** — a checklist (paper, cleaning, dairy, pantry, etc.) that flows into the grocery list.
 - **Add-your-own items** and **per-item store dropdowns** that the app remembers (learned preferences).
 - **Stores:** Smiths, Whole Foods, Walmart, Amazon.
+- **Shared family login + live sync** — one shared password; everyone sees and edits the same menu, updating in real time across phones and computers. A sync indicator shows Synced / Offline.
 
 ## Run it locally
 
-It's just one file. Either:
+Requires Node 18+ (no Python needed).
 
-- Double-click `index.html` to open it in a browser, **or**
-- Serve the folder: `python3 -m http.server 8080` then visit `http://localhost:8080`.
+```
+npm install
+npm start            # serves on http://localhost:3000
+```
 
-## Deploy on Replit (static hosting)
+Open `http://localhost:3000` and sign in. With no `FAMILY_PASSWORD` set, the dev default password is **`moorefamily`**. Locally the shared record is stored in `.data/household.json` (gitignored); on Replit it's stored in the Replit Database automatically.
 
-1. Push this repo to GitHub.
-2. In Replit: **Create Repl → Import from GitHub** → select this repo.
-3. Click **Run** to preview (uses the command in `.replit`).
-4. To publish a public URL: **Deploy → Static**, set the public directory to `.` (the repo root). Replit serves `index.html` automatically.
-5. Open the deployed URL on phones and **Add to Home Screen** (see `PUBLISH-GUIDE.md`).
+## Deploy on Replit (Reserved VM)
+
+Live sync needs an always-on server, so deploy as a **Reserved VM** (not Static). Full step-by-step is in [`DEPLOY-SYNC.md`](DEPLOY-SYNC.md). Short version:
+
+1. Push to GitHub, then in Replit **Import from GitHub**.
+2. Add two **Secrets**: `FAMILY_PASSWORD` (the family's shared password) and `SESSION_SECRET` (any long random string).
+3. **Run** to preview, then **Deploy → Reserved VM** with run command `npm start`.
+4. Open the deployed URL on phones, sign in once, and **Add to Home Screen**.
 
 ## Project structure
 
 ```
-index.html        # the entire app: HTML + CSS + JavaScript (vanilla)
-README.md         # this file
-CLAUDE.md         # guide for editing with Claude Code
-PUBLISH-GUIDE.md  # step-by-step phone/hosting walkthrough
-.replit           # Replit run/deploy config
+index.html         # the app: HTML + CSS + JavaScript (vanilla), incl. login + sync client
+server.js          # Node/Express server: shared login, shared record, live WebSocket sync
+lib/store.js       # storage layer: Replit DB in production, local JSON file in dev
+package.json       # dependencies (express, ws)
+README.md          # this file
+CLAUDE.md          # guide for editing with Claude Code
+DEPLOY-SYNC.md     # Replit Reserved VM deployment + Secrets walkthrough
+PUBLISH-GUIDE.md   # older single-file phone/hosting notes (pre-sync)
+.replit            # Replit run/deploy config
 .gitignore
 ```
 
-## Data & limitations
+## Data & how sync works
 
-- All selections, household checks, custom items, **custom dinners**, and learned store choices are saved in the **browser's localStorage** (key: `mooreMenu`). Data lives on each device — **it does not sync between phones yet.**
-- No backend, no accounts, no real ordering yet.
+- The shared family record (selections, Thistle nights, household checks, learned stores, custom dinners) lives **on the server** — one record for the whole household.
+- Each device also keeps a **localStorage cache** (key: `mooreMenu`) so the app loads instantly and keeps working offline; edits made offline are pushed when the connection returns.
+- Live updates travel over a **WebSocket**. Simultaneous edits are last-write-wins (rare for a small household).
+- No real ordering yet (see roadmap).
 
 ## Roadmap
 
-1. ✅ Single-file planner, hosted as a static site (now).
-2. ⬜ Backend + database so selections sync across devices, plus a family login.
+1. ✅ Single-file planner (static).
+2. ✅ Backend + database so selections sync across devices, plus a shared family login.
 3. ⬜ Instacart integration so the finished grocery list becomes a real cart.
+4. ⬜ (Optional) Per-person accounts within the household.

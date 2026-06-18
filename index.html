@@ -161,6 +161,28 @@
     .ing-row{flex-wrap:wrap}
     .ing-row input.ing-name{flex:1 1 100%}
   }
+  /* ---------- login gate ---------- */
+  body.locked .wrap{display:none}
+  #authModal{background:var(--bg);align-items:center}
+  #authModal .modal{max-width:380px}
+  #authModal .mbody{text-align:center}
+  #authModal .lock-emoji{font-size:34px}
+  #authModal h2{margin:8px 0 2px;font-size:21px}
+  #authModal .sub{color:var(--muted);font-size:13.5px;margin-bottom:16px}
+  #authPass{width:100%;font:inherit;padding:11px 13px;border:1px solid var(--line);
+    border-radius:11px;background:#fff;color:var(--ink);text-align:center}
+  #authPass:focus{outline:none;border-color:var(--accent)}
+  #authErr{color:var(--smiths);font-size:13px;min-height:18px;margin:8px 0 2px}
+  #authBtn{width:100%;margin-top:6px}
+  /* ---------- sync status pill ---------- */
+  .syncpill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    padding:4px 11px;border-radius:20px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+  .syncpill .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+  .syncpill.ok{color:var(--gf);border-color:#cce8cd;background:#f1f8f1}
+  .syncpill.ok .dot{background:var(--gf)}
+  .syncpill.off{color:var(--accent2);border-color:#f0d8c6;background:#fdf3ec}
+  .syncpill.off .dot{background:var(--accent2)}
+  @media print{ .syncpill{display:none} }
 </style>
 </head>
 <body>
@@ -176,6 +198,8 @@
       <button onclick="window.print()">🖨️ Print menu</button>
       <button onclick="resetPrefs()" title="Forget learned store choices">↺ Store memory</button>
       <button class="warn" onclick="resetWeek()">↺ Clear week</button>
+      <span class="syncpill" id="syncpill" title="Sync status"><span class="dot"></span><span id="synctext">Local only</span></span>
+      <button id="logoutBtn" onclick="logout()" style="display:none" title="Sign out of the shared menu">⎋ Sign out</button>
     </div>
   </header>
 
@@ -208,6 +232,21 @@
   </div>
 
   <footer>Built for the Moore family • Plan Sunday, shop once, eat all week.</footer>
+</div>
+
+<!-- Family login gate -->
+<div class="overlay" id="authModal">
+  <div class="modal">
+    <div class="mbody">
+      <div class="lock-emoji">🍽️🔒</div>
+      <h2>Moore Family Menu</h2>
+      <div class="sub">Enter the family password to see and edit the shared menu.</div>
+      <input id="authPass" type="password" placeholder="Family password" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')doLogin()">
+      <div id="authErr"></div>
+      <button class="primary" id="authBtn" onclick="doLogin()">Sign in</button>
+    </div>
+  </div>
 </div>
 
 <!-- Recipe viewer -->
@@ -785,14 +824,113 @@ function deleteCustomMeal(di,mi){
   if(document.getElementById('panel').classList.contains('show')) buildList();
 }
 
-/* ---------- PERSISTENCE ----------
-   Weekly choices reset each week; storePrefs, customMeals & customQty persist (the app's "memory"). */
-function save(){try{localStorage.setItem('mooreMenu',JSON.stringify({selections,thistleNights,householdSel,storePrefs,customItems,customMeals,customQty}));}catch(e){}}
-function load(){try{const s=localStorage.getItem('mooreMenu');if(s){const o=JSON.parse(s);
-  if(o&&o.selections){selections=o.selections;thistleNights=o.thistleNights||{};householdSel=o.householdSel||{};storePrefs=o.storePrefs||{};customItems=o.customItems||[];customMeals=o.customMeals||{};customQty=o.customQty||{};}
-  else if(o){selections=o;} }}catch(e){}
+/* ---------- STATE BUNDLE ----------
+   The whole shared household record, in one object. */
+function collectDoc(){
+  return {selections,thistleNights,householdSel,storePrefs,customItems,customMeals,customQty};
+}
+function assignDoc(o){
+  selections=o.selections||{}; thistleNights=o.thistleNights||{}; householdSel=o.householdSel||{};
+  storePrefs=o.storePrefs||{}; customItems=o.customItems||[]; customMeals=o.customMeals||{}; customQty=o.customQty||{};
   customItems.forEach(c=>HH_DEFAULT[c.n]=c.s);  // register custom household defaults
-  Object.assign(QTY,customQty); }               // re-register quantities for custom meal ingredients
+  Object.assign(QTY,customQty);                 // re-register custom meal ingredient quantities
+}
+
+/* ---------- PERSISTENCE + LIVE SYNC ----------
+   localStorage is a per-device cache for instant load + offline use; the server
+   holds the shared family copy and pushes changes to every device over a WebSocket.
+   resetWeek clears the week but keeps storePrefs/customMeals/customQty (the "memory"). */
+let ws=null, awaitingAck=false, dirty=false, reconnectTimer=null;
+
+function save(){
+  try{localStorage.setItem('mooreMenu',JSON.stringify(collectDoc()));}catch(e){}
+  dirty=true; flush();
+}
+function flush(){
+  if(!ws||ws.readyState!==1||awaitingAck) return;   // offline or mid-send — flush later
+  ws.send(JSON.stringify({type:'update',doc:collectDoc()}));
+  awaitingAck=true; dirty=false;
+}
+function load(){  // load the cached copy for an instant first paint
+  try{const s=localStorage.getItem('mooreMenu');if(s){const o=JSON.parse(s);
+    if(o&&o.selections){assignDoc(o);} else if(o){selections=o;}
+  }}catch(e){}
+  customItems.forEach(c=>HH_DEFAULT[c.n]=c.s);
+  Object.assign(QTY,customQty);
+}
+function applyDoc(doc){  // apply an authoritative copy received from the server
+  assignDoc(doc);
+  try{localStorage.setItem('mooreMenu',JSON.stringify(collectDoc()));}catch(e){}
+  render(); renderHousehold();
+  if(document.getElementById('panel').classList.contains('show')) buildList();
+}
+function setSync(state){  // 'ok' | 'off' | 'local'
+  const pill=document.getElementById('syncpill'), txt=document.getElementById('synctext');
+  pill.classList.remove('ok','off');
+  if(state==='ok'){pill.classList.add('ok');txt.textContent='Synced';}
+  else if(state==='off'){pill.classList.add('off');txt.textContent='Offline — will sync';}
+  else {txt.textContent='Local only';}
+}
+function connect(){
+  const proto=location.protocol==='https:'?'wss:':'ws:';
+  ws=new WebSocket(proto+'//'+location.host+'/ws');
+  ws.onopen=()=>{ setSync('ok'); if(dirty) flush(); };
+  ws.onclose=()=>{ setSync('off'); scheduleReconnect(); };
+  ws.onerror=()=>{ try{ws.close();}catch(e){} };
+  ws.onmessage=(e)=>{
+    let m; try{m=JSON.parse(e.data);}catch(err){return;}
+    if(m.type==='state'){
+      if(awaitingAck) return;          // don't clobber a change we just sent
+      applyDoc(m.doc);
+    } else if(m.type==='ack'){
+      awaitingAck=false;
+      if(dirty) flush();               // more edits arrived while waiting — send them
+    }
+  };
+}
+function scheduleReconnect(){
+  if(reconnectTimer) return;
+  reconnectTimer=setTimeout(()=>{reconnectTimer=null; connect();}, 2000);
+}
+
+/* ---------- FAMILY LOGIN ---------- */
+function showLogin(){
+  document.body.classList.add('locked');
+  document.getElementById('authModal').classList.add('show');
+  setTimeout(()=>document.getElementById('authPass').focus(),50);
+}
+function startApp(){
+  document.getElementById('authModal').classList.remove('show');
+  document.body.classList.remove('locked');
+  document.getElementById('logoutBtn').style.display='';
+  connect();
+}
+function doLogin(){
+  const pass=document.getElementById('authPass').value;
+  const err=document.getElementById('authErr'), btn=document.getElementById('authBtn');
+  err.textContent=''; btn.disabled=true;
+  fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pass})})
+    .then(r=>{ btn.disabled=false;
+      if(r.ok){ document.getElementById('authPass').value=''; startApp(); }
+      else { err.textContent='Wrong password — try again.'; }
+    })
+    .catch(()=>{ btn.disabled=false; err.textContent='Could not reach the server.'; });
+}
+function logout(){
+  fetch('/api/logout',{method:'POST'}).catch(()=>{}).finally(()=>{
+    if(ws){ try{ws.close();}catch(e){} ws=null; }
+    setSync('local');
+    document.getElementById('logoutBtn').style.display='none';
+    showLogin();
+  });
+}
+/* On startup: if the server says we're signed in, go live; otherwise show login.
+   If there's no server at all (app opened as a plain file), run in local-only mode. */
+function initSync(){
+  fetch('/api/me').then(r=>r.json()).then(d=>{
+    if(d.authed) startApp(); else showLogin();
+  }).catch(()=>{ setSync('local'); });
+}
 function resetWeek(){selections={};thistleNights={};householdSel={};save();render();renderHousehold();document.getElementById('panel').classList.remove('show');}
 function resetPrefs(){if(confirm('Forget all learned store choices and go back to defaults?')){storePrefs={};save();renderHousehold();if(document.getElementById('panel').classList.contains('show'))buildList();}}
 
@@ -807,6 +945,7 @@ document.querySelectorAll('input[name="am-gf"]').forEach(r=>r.addEventListener('
     document.querySelector('input[name="am-gf"]:checked').value==='adapt'?'block':'none';
 }));
 renderHousehold();
+initSync();   // check login, then go live (or local-only if no server)
 </script>
 </body>
 </html>

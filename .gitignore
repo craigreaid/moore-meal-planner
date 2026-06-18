@@ -5,9 +5,13 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Node (only if a backend is added later)
+# Node
 node_modules/
 npm-debug.log*
+
+# Local secrets & local-dev data store
+.env
+.data/
 
 # Replit local state
 .replit.local
