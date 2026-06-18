@@ -19,6 +19,15 @@ This is guidance for making changes to the Moore Family Meal & Grocery Planner w
 - **Auth:** `initSync()` calls `/api/me`; if signed in → `startApp()` (connect WS), else `showLogin()`. If there's no server at all (e.g. file opened directly), it falls back to local-only mode. Login posts to `/api/login`; the server sets a signed httpOnly session cookie. The password is checked server-side against the `FAMILY_PASSWORD` secret — never shipped to the client.
 - **Server (`server.js`):** on each `update` it bumps `rev`, persists, broadcasts `state` to *other* clients, and `ack`s the sender. Last-write-wins; fine for a small household.
 
+## Barcode scanning
+
+- **Button:** "📷 Scan" in the household add-row → `openScanner()`.
+- **Camera:** prefers the native `BarcodeDetector` (Android/desktop Chrome); on iPhone Safari it lazy-loads the **vendored** ZXing library from `/vendor/zxing-browser.min.js` (served by `server.js` from `public/vendor/`, copied from the `@zxing/browser` package — not a CDN). If the camera is unavailable/denied, `manualFallback()` lets the user type the item name.
+- **Lookup:** `GET /api/lookup?code=<barcode>` (auth-gated) calls **Open Food Facts** server-side and returns `{found, name}`. Food-focused; non-food/unknown items fall back to manual naming.
+- **Adding:** scanned items go through `addItemToList(name, store)` — the same path as the manual add-row — so they become checked custom items that flow into the grocery list and sync. `addCustom()` is now a thin wrapper over it.
+- **Memory:** `barcodeMap` (synced state: barcode → `{n,s}`) auto-fills name+store on re-scan for the whole family. It's in `collectDoc`/`assignDoc` and the server's `defaultDoc`.
+- **Note:** camera scanning needs a secure context (HTTPS or localhost) — fine on the Replit deploy. The vendored library is committed (`node_modules` is gitignored), so don't delete `public/vendor/`.
+
 ## Data structures (all near the top of the `<script>`)
 
 - `STORES` — object of store name → `{color, role}`. The four stores: Smiths, Whole Foods, Walmart, Amazon.

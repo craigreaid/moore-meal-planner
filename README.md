@@ -13,6 +13,7 @@ A repeatable weekly dinner planner with a consolidated, store-by-store grocery l
 - **Thistle integration** — mark nights the adults eat Thistle; that dinner's quantities drop to kids-only portions.
 - **Household goods & staples** — a checklist (paper, cleaning, dairy, pantry, etc.) that flows into the grocery list.
 - **Add-your-own items** and **per-item store dropdowns** that the app remembers (learned preferences).
+- **Barcode scanning** — tap "📷 Scan", point the camera at a product barcode, and it's added to this week's list. Product names come from Open Food Facts (free); anything not found (or any non-food item) you just name yourself. Scanned barcodes are remembered (and shared) so re-scanning auto-fills instantly.
 - **Stores:** Smiths, Whole Foods, Walmart, Amazon.
 - **Shared family login + live sync** — one shared password; everyone sees and edits the same menu, updating in real time across phones and computers. A sync indicator shows Synced / Offline.
 
@@ -39,9 +40,10 @@ Live sync needs an always-on server, so deploy as a **Reserved VM** (not Static)
 ## Project structure
 
 ```
-index.html         # the app: HTML + CSS + JavaScript (vanilla), incl. login + sync client
-server.js          # Node/Express server: shared login, shared record, live WebSocket sync
+index.html         # the app: HTML + CSS + JavaScript (vanilla), incl. login, sync & scanner
+server.js          # Node/Express server: shared login, shared record, live sync, barcode lookup
 lib/store.js       # storage layer: Replit DB in production, local JSON file in dev
+public/vendor/     # vendored ZXing barcode library (served at /vendor for the iPhone fallback)
 package.json       # dependencies (express, ws)
 README.md          # this file
 CLAUDE.md          # guide for editing with Claude Code

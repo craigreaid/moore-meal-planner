@@ -73,7 +73,7 @@ app.get('/api/me', (req, res) => res.json({ authed: isAuthed(req) }));
 function defaultDoc() {
   return {
     selections: {}, thistleNights: {}, householdSel: {},
-    storePrefs: {}, customItems: [], customMeals: {}, customQty: {},
+    storePrefs: {}, customItems: [], customMeals: {}, customQty: {}, barcodeMap: {},
     rev: 0, updatedAt: 0
   };
 }
@@ -87,6 +87,34 @@ app.get('/api/state', async (req, res) => {
   if (!isAuthed(req)) return res.status(401).json({ error: 'unauthorized' });
   res.json(await ensureLoaded());
 });
+
+/* ---------- barcode -> product name (Open Food Facts) ---------- */
+app.get('/api/lookup', async (req, res) => {
+  if (!isAuthed(req)) return res.status(401).json({ error: 'unauthorized' });
+  const code = String(req.query.code || '').replace(/\D/g, '');
+  if (!code) return res.status(400).json({ error: 'no code' });
+  try {
+    const url = `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,product_name_en,brands`;
+    const r = await fetch(url, { headers: { 'User-Agent': 'MooreMealPlanner/1.0 (family use)' } });
+    const j = await r.json();
+    if (j && j.status === 1 && j.product) {
+      const p = j.product;
+      const name = (p.product_name || p.product_name_en || '').trim();
+      const brand = (p.brands || '').split(',')[0].trim();
+      // Prepend the brand only when the name doesn't already include it (avoids "Nutella Nutella").
+      const label = (brand && !name.toLowerCase().includes(brand.toLowerCase()))
+        ? `${brand} ${name}`.trim()
+        : (name || brand);
+      return res.json({ found: !!label, code, name: label });
+    }
+    return res.json({ found: false, code, name: '' });
+  } catch (e) {
+    return res.status(502).json({ error: 'lookup failed', code });
+  }
+});
+
+// Serve the vendored scanner library (and any future static assets) from /vendor.
+app.use('/vendor', express.static(path.join(__dirname, 'public', 'vendor')));
 
 // Serve the single-page app. (We intentionally do NOT static-serve the whole
 // folder, so server.js / package.json aren't exposed.)

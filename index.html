@@ -183,6 +183,16 @@
   .syncpill.off{color:var(--accent2);border-color:#f0d8c6;background:#fdf3ec}
   .syncpill.off .dot{background:var(--accent2)}
   @media print{ .syncpill{display:none} }
+  /* ---------- barcode scanner ---------- */
+  .scanframe{position:relative;width:100%;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:4/3}
+  .scanframe video{width:100%;height:100%;object-fit:cover;display:block}
+  .scanline{position:absolute;left:8%;right:8%;top:50%;height:2px;background:var(--smiths);
+    box-shadow:0 0 8px var(--smiths);animation:scanmove 2.2s ease-in-out infinite}
+  @keyframes scanmove{0%,100%{top:25%}50%{top:75%}}
+  .scanhint{text-align:center;color:var(--muted);font-size:13.5px;margin:10px 0 0}
+  .scancode{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px;font-variant-numeric:tabular-nums}
+  .scanstatus{font-size:13px;color:var(--accent2);min-height:18px;margin:6px 0 2px;text-align:center}
+  button.scanbtn{background:var(--smiths);color:#fff;border-color:transparent}
 </style>
 </head>
 <body>
@@ -221,6 +231,7 @@
       <input id="addname" type="text" placeholder="Add your own item — e.g. GF crackers, dog food, foil…" autocomplete="off">
       <select id="addstore"></select>
       <button class="primary" onclick="addCustom()">+ Add</button>
+      <button class="scanbtn" onclick="openScanner()" title="Add an item by scanning its barcode">📷 Scan</button>
     </div>
     <div id="hhgrid"></div>
   </section>
@@ -245,6 +256,34 @@
         onkeydown="if(event.key==='Enter')doLogin()">
       <div id="authErr"></div>
       <button class="primary" id="authBtn" onclick="doLogin()">Sign in</button>
+    </div>
+  </div>
+</div>
+
+<!-- Barcode scanner -->
+<div class="overlay" id="scanModal">
+  <div class="modal">
+    <div class="mhead">
+      <div><div class="theme">Add by barcode</div><h2>Scan an item</h2></div>
+      <button class="mclose" onclick="closeScanner()" title="Close">×</button>
+    </div>
+    <div class="mbody">
+      <div id="scanVideoWrap">
+        <div class="scanframe"><video id="scanVideo" playsinline muted></video><div class="scanline"></div></div>
+        <p class="scanhint">Point your camera at a barcode.</p>
+      </div>
+      <div id="scanResult" style="display:none">
+        <div id="scanCodeLabel" class="scancode"></div>
+        <div class="fld"><span class="lab">Item name</span>
+          <input id="scanName" type="text" placeholder="e.g. Cheerios" autocomplete="off"></div>
+        <div class="fld"><span class="lab">Store</span>
+          <select id="scanStore"></select></div>
+        <div id="scanStatus" class="scanstatus"></div>
+        <div class="mfoot">
+          <button onclick="scanAnother()">📷 Scan another</button>
+          <button class="primary" onclick="addScanned()">➕ Add to list</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -441,6 +480,7 @@ let storePrefs = {};     // item name -> preferred store (learned override)
 let customItems = [];    // user-added household items: {n:name, s:default store}
 let customMeals = {};    // day index -> array of user-added meals {name,gf,note?,desc,ing,steps,custom:true}
 let customQty = {};      // ingredient name -> [amount, unit, 0] for custom meal ingredients
+let barcodeMap = {};     // scanned barcode -> {n:name, s:store} so re-scans auto-fill
 
 /* ---------- FAMILY-OF-4 QUANTITIES ----------
    [amount, unit, staple]  amount = per single dinner for 4 people.
@@ -595,19 +635,131 @@ function renderHousehold(){
   });
   bindStoreSelects(wrap);
 }
+// add an item to this week's list (used by the add-row and the barcode scanner)
+function addItemToList(name,store){
+  name=(name||'').trim(); if(!name) return false;
+  if(!customItems.some(c=>c.n.toLowerCase()===name.toLowerCase())){
+    customItems.push({n:name,s:store}); HH_DEFAULT[name]=store;
+  } else if(store){ storePrefs[name]=store; }   // existing item — honor the chosen store
+  householdSel[name]=true;
+  save(); renderHousehold();
+  if(document.getElementById('panel').classList.contains('show')) buildList();
+  return true;
+}
 // add a custom item from the input row
 function addCustom(){
   const inp=document.getElementById('addname'), st=document.getElementById('addstore');
-  const name=inp.value.trim(); if(!name) return;
-  if(!customItems.some(c=>c.n.toLowerCase()===name.toLowerCase())){
-    customItems.push({n:name,s:st.value});
-    HH_DEFAULT[name]=st.value;
-  }
-  householdSel[name]=true;
-  inp.value='';
-  save(); renderHousehold();
-  if(document.getElementById('panel').classList.contains('show')) buildList();
+  if(addItemToList(inp.value, st.value)) inp.value='';
 }
+
+/* ---------- BARCODE SCANNER ----------
+   Uses the native BarcodeDetector when available (Android/desktop Chrome),
+   otherwise lazy-loads the vendored ZXing library (iPhone Safari). Looks the
+   barcode up via /api/lookup (Open Food Facts) and adds it to this week's list. */
+let scanStream=null, scanDetector=null, scanRAF=null, scanActive=false, scanHandled=false;
+let zxingReader=null, zxingControls=null, scanCode='';
+
+function loadZXing(){
+  return new Promise((resolve,reject)=>{
+    if(window.ZXingBrowser) return resolve(window.ZXingBrowser);
+    const s=document.createElement('script');
+    s.src='/vendor/zxing-browser.min.js';
+    s.onload=()=>window.ZXingBrowser?resolve(window.ZXingBrowser):reject(new Error('zxing missing'));
+    s.onerror=()=>reject(new Error('zxing load failed'));
+    document.head.appendChild(s);
+  });
+}
+function setScanStatus(t){ document.getElementById('scanStatus').textContent=t||''; }
+
+function openScanner(){
+  scanHandled=false; scanCode='';
+  document.getElementById('scanVideoWrap').style.display='';
+  document.getElementById('scanResult').style.display='none';
+  setScanStatus('');
+  openModal('scanModal');
+  startCamera();
+}
+async function startCamera(){
+  const video=document.getElementById('scanVideo');
+  try{
+    if('BarcodeDetector' in window){
+      scanDetector=new window.BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39']});
+      scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+      video.srcObject=scanStream; await video.play();
+      scanActive=true; nativeLoop();
+    } else {
+      const ZX=await loadZXing();
+      zxingReader=new ZX.BrowserMultiFormatReader();
+      zxingControls=await zxingReader.decodeFromConstraints(
+        {video:{facingMode:{ideal:'environment'}}}, video,
+        (result)=>{ if(result) onCode(result.getText()); });
+    }
+  }catch(e){
+    manualFallback(); // no camera / permission denied → let them type the item
+  }
+}
+async function nativeLoop(){
+  if(!scanActive) return;
+  try{
+    const codes=await scanDetector.detect(document.getElementById('scanVideo'));
+    if(codes && codes.length){ onCode(codes[0].rawValue); return; }
+  }catch(e){}
+  scanRAF=requestAnimationFrame(nativeLoop);
+}
+function stopCamera(){
+  scanActive=false;
+  if(scanRAF){ cancelAnimationFrame(scanRAF); scanRAF=null; }
+  if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream=null; }
+  if(zxingControls){ try{zxingControls.stop();}catch(e){} zxingControls=null; }
+  const v=document.getElementById('scanVideo'); if(v) v.srcObject=null;
+}
+function populateScanStores(sel){
+  document.getElementById('scanStore').innerHTML=STORE_ORDER.map(s=>`<option${s===sel?' selected':''}>${s}</option>`).join('');
+}
+function manualFallback(){
+  stopCamera();
+  document.getElementById('scanVideoWrap').style.display='none';
+  document.getElementById('scanResult').style.display='block';
+  document.getElementById('scanCodeLabel').textContent='';
+  scanCode=''; populateScanStores('Walmart');
+  document.getElementById('scanName').value='';
+  setScanStatus('Camera unavailable — type the item name to add it.');
+  document.getElementById('scanName').focus();
+}
+function onCode(code){
+  if(scanHandled) return; scanHandled=true;
+  scanCode=String(code).replace(/\s/g,'');
+  stopCamera();
+  document.getElementById('scanVideoWrap').style.display='none';
+  document.getElementById('scanResult').style.display='block';
+  document.getElementById('scanCodeLabel').textContent='Barcode: '+scanCode;
+  const nameInp=document.getElementById('scanName');
+  const known=barcodeMap[scanCode];
+  if(known){ populateScanStores(known.s); nameInp.value=known.n; setScanStatus('Seen before — details filled in.'); nameInp.focus(); return; }
+  populateScanStores('Walmart'); nameInp.value=''; setScanStatus('Looking up product…');
+  fetch('/api/lookup?code='+encodeURIComponent(scanCode)).then(r=>r.json()).then(d=>{
+    if(d && d.found && d.name){ nameInp.value=d.name; setScanStatus(''); }
+    else setScanStatus('Not in the food database — type the item name.');
+    nameInp.focus();
+  }).catch(()=>{ setScanStatus("Couldn't look it up — type the item name."); nameInp.focus(); });
+}
+function addScanned(){
+  const name=document.getElementById('scanName').value.trim();
+  const store=document.getElementById('scanStore').value;
+  if(!name){ setScanStatus('Please enter a name.'); return; }
+  if(scanCode) barcodeMap[scanCode]={n:name,s:store};   // remember for instant re-scans (syncs)
+  addItemToList(name,store);
+  setScanStatus('✓ Added “'+name+'” to this week’s list.');
+  document.getElementById('scanName').value='';
+}
+function scanAnother(){
+  scanHandled=false; scanCode='';
+  document.getElementById('scanResult').style.display='none';
+  document.getElementById('scanVideoWrap').style.display='';
+  setScanStatus('');
+  startCamera();
+}
+function closeScanner(){ stopCamera(); closeModal('scanModal'); }
 // wire up any store dropdowns within a container
 function bindStoreSelects(scope){
   scope.querySelectorAll('select.storesel').forEach(sel=>{
@@ -737,7 +889,7 @@ function buildList(){
 /* ---------- MODALS ---------- */
 function openModal(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden';}
 function closeModal(id){document.getElementById(id).classList.remove('show');document.body.style.overflow='';}
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal('recipeModal');closeModal('addMealModal');} });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal('recipeModal');closeModal('addMealModal');closeScanner();} });
 
 /* full-serving quantity for a single recipe (factor 1) */
 function recipeQty(item){ const q=QTY[item]; return q?(q[0]+' '+q[1]):''; }
@@ -827,11 +979,12 @@ function deleteCustomMeal(di,mi){
 /* ---------- STATE BUNDLE ----------
    The whole shared household record, in one object. */
 function collectDoc(){
-  return {selections,thistleNights,householdSel,storePrefs,customItems,customMeals,customQty};
+  return {selections,thistleNights,householdSel,storePrefs,customItems,customMeals,customQty,barcodeMap};
 }
 function assignDoc(o){
   selections=o.selections||{}; thistleNights=o.thistleNights||{}; householdSel=o.householdSel||{};
   storePrefs=o.storePrefs||{}; customItems=o.customItems||[]; customMeals=o.customMeals||{}; customQty=o.customQty||{};
+  barcodeMap=o.barcodeMap||{};
   customItems.forEach(c=>HH_DEFAULT[c.n]=c.s);  // register custom household defaults
   Object.assign(QTY,customQty);                 // re-register custom meal ingredient quantities
 }
