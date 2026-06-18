@@ -739,17 +739,21 @@ function onCode(code){
   populateScanStores('Walmart'); nameInp.value=''; setScanStatus('Looking up product…');
   fetch('/api/lookup?code='+encodeURIComponent(scanCode)).then(r=>r.json()).then(d=>{
     if(d && d.found && d.name){ nameInp.value=d.name; setScanStatus(''); }
-    else setScanStatus('Not in the food database — type the item name.');
+    else setScanStatus("Not found — name it and we'll save this barcode to your products for next time.");
     nameInp.focus();
-  }).catch(()=>{ setScanStatus("Couldn't look it up — type the item name."); nameInp.focus(); });
+  }).catch(()=>{ setScanStatus("Couldn't look it up — name it and we'll save this barcode for next time."); nameInp.focus(); });
 }
 function addScanned(){
   const name=document.getElementById('scanName').value.trim();
   const store=document.getElementById('scanStore').value;
   if(!name){ setScanStatus('Please enter a name.'); return; }
-  if(scanCode) barcodeMap[scanCode]={n:name,s:store};   // remember for instant re-scans (syncs)
+  const learned = scanCode && !barcodeMap[scanCode];   // first time we've seen this barcode
+  if(scanCode) barcodeMap[scanCode]={n:name,s:store};   // commit to the family product database (syncs)
   addItemToList(name,store);
-  setScanStatus('✓ Added “'+name+'” to this week’s list.');
+  if(scanCode) setScanStatus(learned
+    ? '✓ Added “'+name+'” — barcode saved to your products for next time.'
+    : '✓ Added “'+name+'” — product details updated.');
+  else setScanStatus('✓ Added “'+name+'” to this week’s list.');
   document.getElementById('scanName').value='';
 }
 function scanAnother(){
