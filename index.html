@@ -315,8 +315,7 @@
       <button class="mclose" onclick="closeModal('addMealModal')" title="Close">×</button>
     </div>
     <div class="mbody">
-      <div class="fld"><span class="lab">Day of the week</span>
-        <select id="am-day"></select></div>
+      <div class="fld" style="margin-bottom:8px"><span class="lab" style="margin-bottom:0">Available on every day once saved.</span></div>
       <div class="fld"><span class="lab">Dinner name</span>
         <input id="am-name" type="text" placeholder="e.g. Lemon Garlic Chicken" autocomplete="off"></div>
       <div class="fld"><span class="lab">Short description</span>
@@ -509,10 +508,11 @@ let thistleNights = {};  // day -> true when adults eat Thistle (cook for kids o
 let householdSel = {};   // household/staple item name -> true (needed this week)
 let storePrefs = {};     // item name -> preferred store (learned override)
 let customItems = [];    // user-added household items: {n:name, s:default store}
-let customMeals = {};    // day index -> array of user-added meals {name,gf,note?,desc,ing,steps,custom:true}
+let customMeals = [];    // global catalog of user-added dinners {name,gf,note?,desc,ing,steps,custom:true}
 let customQty = {};      // ingredient name -> [amount, unit, 0] for custom meal ingredients
 let barcodeMap = {};     // scanned barcode -> {n:name, s:store} so re-scans auto-fill
-let sides = {};          // day index -> array of side dishes {name, ing:[[item,store]], steps}
+let sideCatalog = [];    // global, reusable catalog of side dishes {name, ing:[[item,store]], steps}
+let daySides = {};       // day index -> array of side names selected for that day
 
 /* ---------- FAMILY-OF-4 QUANTITIES ----------
    [amount, unit, staple]  amount = per single dinner for 4 people.
@@ -807,66 +807,74 @@ function bindStoreSelects(scope){
   });
 }
 
-/* built-in meals for a day, plus any custom dinners the user added */
-function mealsFor(di){ return DAYS[di].meals.concat(customMeals[di]||[]); }
+/* ---------- RECIPE CATALOG (shared across all days) ---------- */
+const BUILTIN_MEALS = DAYS.reduce((a,d)=>a.concat(d.meals),[]);  // all built-in dinners, flattened
+function allDinners(){ return BUILTIN_MEALS.concat(customMeals); }        // built-ins + user dinners
+function dinnerByName(n){ return allDinners().find(m=>m.name===n); }
+function sideByName(n){ return sideCatalog.find(s=>s.name===n); }
+function panelShown(){ return document.getElementById('panel').classList.contains('show'); }
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s){ return escHtml(s).replace(/"/g,'&quot;'); }
 
 /* ---------- RENDER DAYS ---------- */
+function dinnerOptionsHtml(selName){
+  const byName=(a,b)=>a.localeCompare(b);
+  const builtins=BUILTIN_MEALS.map(m=>m.name).sort(byName);
+  const customs=customMeals.map(m=>m.name).sort(byName);
+  const opt=n=>`<option value="${escAttr(n)}"${n===selName?' selected':''}>${escHtml(n)}</option>`;
+  let h=`<option value="">— no dinner —</option>`;
+  h+=`<optgroup label="Dinners">${builtins.map(opt).join('')}</optgroup>`;
+  if(customs.length) h+=`<optgroup label="Your dinners">${customs.map(opt).join('')}</optgroup>`;
+  return h;
+}
 function render(){
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   DAYS.forEach((d,di)=>{
     const card = document.createElement('div');
     card.className = 'day';
-    let html = `<h2>${d.day}${thistleNights[di]?' <span class="tbadge">🌿 Thistle</span>':''}</h2><div class="meals">`;
-    mealsFor(di).forEach((m,mi)=>{
-      const sel = selections[di]===mi ? 'sel':'';
-      const badge = m.gf==='native'
-        ? `<span class="badge">GF</span>`
-        : `<span class="badge adapt" title="${m.note||''}">GF swap</span>`;
-      const ctag = m.custom ? ` <span class="custom-tag">yours</span>` : '';
-      html += `<label class="meal ${sel}" data-d="${di}" data-m="${mi}">
-        <input type="radio" name="day${di}" ${sel?'checked':''}>
-        <span class="mealbody"><span class="name">${m.name}${badge}${ctag}</span>
-        <span class="desc">${m.desc}${m.gf==='adapt'&&m.note?' <em>('+m.note+')</em>':''}</span>
-        <span class="mealactions"><button class="link" data-recipe data-d="${di}" data-m="${mi}">📖 View recipe</button></span></span>
-      </label>`;
-    });
-    html += '</div>';
+    const selName = selections[di]||'';
+    const hasMeal = selName && dinnerByName(selName);
+    let html = `<h2>${d.day}${thistleNights[di]?' <span class="tbadge">🌿 Thistle</span>':''}</h2>`;
+    html += `<select class="dinnersel" data-d="${di}">${dinnerOptionsHtml(selName)}</select>`;
+    if(hasMeal) html += `<div class="dinnermeta"><button class="link" data-dinrec="${di}">📖 View recipe</button></div>`;
     const on = thistleNights[di] ? 'on' : '';
     html += `<label class="thistle ${on}" data-tog="${di}">
       <input type="checkbox" ${on?'checked':''}> 🌿 Adults on Thistle — cook for kids only (serves ${KIDS})</label>`;
+    // sides for this day (chosen from the reusable catalog)
     html += `<div class="sides"><div class="sideshd">Sides</div>`;
-    (sides[di]||[]).forEach((s,si)=>{
-      html += `<div class="sideitem"><span class="sidename">🥗 ${s.name}</span>
-        <button class="link sideview" data-d="${di}" data-s="${si}">recipe</button>
-        <button class="rm sidedel" data-d="${di}" data-s="${si}" title="Remove side">×</button></div>`;
+    (daySides[di]||[]).forEach(name=>{
+      html += `<div class="sideitem"><span class="sidename">🥗 ${escHtml(name)}</span>
+        <button class="link sideview" data-d="${di}" data-name="${escAttr(name)}">recipe</button>
+        <button class="rm sidedel" data-d="${di}" data-name="${escAttr(name)}" title="Remove from this day">×</button></div>`;
     });
-    html += `<button class="addside" data-addside="${di}">+ Add side</button></div>`;
+    const avail=sideCatalog.map(s=>s.name).filter(n=>!(daySides[di]||[]).includes(n)).sort((a,b)=>a.localeCompare(b));
+    let addOpts=`<option value="">+ Add a side…</option>`;
+    if(avail.length) addOpts+=`<optgroup label="Saved sides">${avail.map(n=>`<option value="${escAttr(n)}">${escHtml(n)}</option>`).join('')}</optgroup>`;
+    addOpts+=`<option value="__new__">＋ New side…</option>`;
+    html += `<select class="addsidesel" data-d="${di}">${addOpts}</select>`;
+    html += `</div>`;
     card.innerHTML = html;
     grid.appendChild(card);
   });
-  document.querySelectorAll('label.meal').forEach(l=>{
-    l.addEventListener('click',()=>{
-      const di=+l.dataset.d, mi=+l.dataset.m;
-      selections[di]=mi; save(); render();
-    });
-  });
-  document.querySelectorAll('button[data-recipe]').forEach(b=>{
-    b.addEventListener('click',e=>{
-      e.preventDefault(); e.stopPropagation();
-      openRecipe(+b.dataset.d,+b.dataset.m);
-    });
-  });
-  document.querySelectorAll('label.thistle input').forEach(inp=>{
-    inp.addEventListener('change',()=>{
-      const di=+inp.closest('label.thistle').dataset.tog;
-      if(inp.checked) thistleNights[di]=true; else delete thistleNights[di];
-      save(); render();
-    });
-  });
-  document.querySelectorAll('button[data-addside]').forEach(b=>b.addEventListener('click',()=>openAddSide(+b.dataset.addside)));
-  document.querySelectorAll('button.sideview').forEach(b=>b.addEventListener('click',()=>openSideRecipe(+b.dataset.d,+b.dataset.s)));
-  document.querySelectorAll('button.sidedel').forEach(b=>b.addEventListener('click',()=>deleteSide(+b.dataset.d,+b.dataset.s)));
+  grid.querySelectorAll('select.dinnersel').forEach(s=>s.addEventListener('change',()=>{
+    const di=+s.dataset.d;
+    if(s.value) selections[di]=s.value; else delete selections[di];
+    save(); render(); if(panelShown()) buildList();
+  }));
+  grid.querySelectorAll('button[data-dinrec]').forEach(b=>b.addEventListener('click',()=>openDinnerRecipe(+b.dataset.dinrec)));
+  grid.querySelectorAll('label.thistle input').forEach(inp=>inp.addEventListener('change',()=>{
+    const di=+inp.closest('label.thistle').dataset.tog;
+    if(inp.checked) thistleNights[di]=true; else delete thistleNights[di];
+    save(); render(); if(panelShown()) buildList();
+  }));
+  grid.querySelectorAll('select.addsidesel').forEach(s=>s.addEventListener('change',()=>{
+    const di=+s.dataset.d, v=s.value; s.value='';
+    if(!v) return;
+    if(v==='__new__') openAddSide(di); else addDaySide(di,v);
+  }));
+  grid.querySelectorAll('button.sideview').forEach(b=>b.addEventListener('click',()=>openSideRecipe(+b.dataset.d,b.dataset.name)));
+  grid.querySelectorAll('button.sidedel').forEach(b=>b.addEventListener('click',()=>removeDaySide(+b.dataset.d,b.dataset.name)));
 }
 
 /* ---------- GROCERY LIST ---------- */
@@ -874,9 +882,9 @@ function buildList(){
   const panel=document.getElementById('panel');
   const sel=document.getElementById('selsummary');
   const wrap=document.getElementById('stores');
-  const chosen=Object.keys(selections);
+  const chosen=Object.keys(selections).filter(di=>dinnerByName(selections[di]));
   const hhItems=Object.keys(householdSel);
-  const sideDays=Object.keys(sides).filter(di=>(sides[di]||[]).length);
+  const sideDays=Object.keys(daySides).filter(di=>(daySides[di]||[]).length);
   if(chosen.length===0 && hhItems.length===0 && sideDays.length===0){
     panel.classList.add('show');
     sel.innerHTML='<span class="empty">Pick at least one dinner above (or add a side / check some household goods), then build your list.</span>';
@@ -886,7 +894,7 @@ function buildList(){
   const byStore={};
   let summaryParts=[], thistleCount=0;
   chosen.forEach(di=>{
-    const meal=mealsFor(di)[selections[di]];
+    const meal=dinnerByName(selections[di]);
     if(!meal) return;
     const isThistle=!!thistleNights[di];
     const serves=isThistle?KIDS:FULL;
@@ -905,7 +913,8 @@ function buildList(){
   let sideSummary=[];
   sideDays.forEach(di=>{
     const factor=thistleNights[di]?KIDS/FULL:1;
-    sides[di].forEach(side=>{
+    (daySides[di]||[]).forEach(name=>{
+      const side=sideByName(name); if(!side) return;
       side.ing.forEach(([item,defStore])=>{
         const store=storeFor(item,defStore);
         byStore[store]=byStore[store]||{};
@@ -914,7 +923,7 @@ function buildList(){
         byStore[store][item].meals+=1;
       });
     });
-    sideSummary.push(`<strong>${DAYS[di].day}:</strong> ${sides[di].map(s=>s.name).join(', ')}`);
+    sideSummary.push(`<strong>${DAYS[di].day}:</strong> ${(daySides[di]||[]).join(', ')}`);
   });
   // add checked household goods (no serving scaling)
   hhItems.forEach(item=>{
@@ -980,18 +989,18 @@ function showRecipe(m, opts){
   if(opts.onDelete) document.getElementById('rcpDeleteBtn').onclick=opts.onDelete;
   openModal('recipeModal');
 }
-function openRecipe(di,mi){
-  const m=mealsFor(di)[mi]; if(!m) return;
-  showRecipe(m,{context:DAYS[di].day, tag:m.custom?'yours':'', onDelete:m.custom?()=>deleteCustomMeal(di,mi):null, deleteLabel:'Delete this dinner'});
+function openDinnerRecipe(di){
+  const m=dinnerByName(selections[di]); if(!m) return;
+  const custom=customMeals.indexOf(m)>=0;
+  showRecipe(m,{context:DAYS[di].day, tag:custom?'yours':'', onDelete:custom?()=>deleteCustomMeal(m.name):null, deleteLabel:'Delete this dinner everywhere'});
 }
-function openSideRecipe(di,si){
-  const s=(sides[di]||[])[si]; if(!s) return;
-  showRecipe(s,{context:DAYS[di].day+' · side', tag:'side', onDelete:()=>deleteSide(di,si), deleteLabel:'Delete this side'});
+function openSideRecipe(di,name){
+  const s=sideByName(name); if(!s) return;
+  showRecipe(s,{context:DAYS[di].day+' · side', tag:'side', onDelete:()=>deleteSide(name), deleteLabel:'Delete this side everywhere'});
 }
 
 /* ---------- ADD A DINNER ---------- */
 function openAddMeal(){
-  document.getElementById('am-day').innerHTML=DAYS.map((d,i)=>`<option value="${i}">${d.day}</option>`).join('');
   document.getElementById('am-name').value='';
   document.getElementById('am-desc').value='';
   document.getElementById('am-note').value='';
@@ -1028,43 +1037,46 @@ function collectIngredients(containerId){
   return ing;
 }
 function saveMeal(){
-  const di=+document.getElementById('am-day').value;
   const name=document.getElementById('am-name').value.trim();
   if(!name){alert('Please give the dinner a name.');return;}
+  if(allDinners().some(m=>m.name.toLowerCase()===name.toLowerCase())){
+    alert('A dinner with that name already exists — please use a different name.'); return;
+  }
   const desc=document.getElementById('am-desc').value.trim();
   const gf=document.querySelector('input[name="am-gf"]:checked').value;
   const note=gf==='adapt'?document.getElementById('am-note').value.trim():'';
-  const ing=[];
-  document.querySelectorAll('#am-ings .ing-row').forEach(r=>{
-    const n=r.querySelector('.ing-name').value.trim(); if(!n) return;
-    const s=r.querySelector('.ing-store').value;
-    const a=parseFloat(r.querySelector('.ing-amt').value);
-    const u=r.querySelector('.ing-unit').value.trim();
-    ing.push([n,s]);
-    if(!QTY[n]&&!isNaN(a)){ customQty[n]=[a,u||'',0]; QTY[n]=customQty[n]; }  // register a quantity for the grocery list
-  });
+  const ing=collectIngredients('am-ings');
   if(!ing.length){alert('Add at least one ingredient (name required).');return;}
   const steps=document.getElementById('am-steps').value.split('\n').map(s=>s.trim()).filter(Boolean);
   const meal={name,gf,desc,ing,steps,custom:true};
   if(note) meal.note=note;
-  (customMeals[di]=customMeals[di]||[]).push(meal);
+  customMeals.push(meal);   // global catalog — available on every day
   save(); render(); closeModal('addMealModal');
-  if(document.getElementById('panel').classList.contains('show')) buildList();
+  if(panelShown()) buildList();
 }
-function deleteCustomMeal(di,mi){
-  const base=DAYS[di].meals.length, idx=mi-base;
-  if(!customMeals[di]||idx<0||idx>=customMeals[di].length) return;
-  if(!confirm('Delete this dinner option?')) return;
-  customMeals[di].splice(idx,1);
-  if(!customMeals[di].length) delete customMeals[di];
-  if(selections[di]===mi) delete selections[di];        // it was selected — clear that day
-  else if(selections[di]>mi) selections[di]--;          // keep later selection pointing at the right meal
+function deleteCustomMeal(name){
+  const i=customMeals.findIndex(m=>m.name===name); if(i<0) return;
+  if(!confirm('Delete this dinner from your recipes (removes it from any day it’s picked)?')) return;
+  customMeals.splice(i,1);
+  Object.keys(selections).forEach(di=>{ if(selections[di]===name) delete selections[di]; });
   save(); render(); closeModal('recipeModal');
-  if(document.getElementById('panel').classList.contains('show')) buildList();
+  if(panelShown()) buildList();
 }
 
-/* ---------- SIDES ---------- */
+/* ---------- SIDES (reusable catalog + per-day attachments) ---------- */
 let sideDay=0;
+function addDaySide(di,name){            // attach an existing saved side to a day
+  if(!sideByName(name)) return;
+  daySides[di]=daySides[di]||[];
+  if(!daySides[di].includes(name)) daySides[di].push(name);
+  save(); render(); if(panelShown()) buildList();
+}
+function removeDaySide(di,name){          // remove a side from one day (keeps it in the catalog)
+  if(!daySides[di]) return;
+  daySides[di]=daySides[di].filter(n=>n!==name);
+  if(!daySides[di].length) delete daySides[di];
+  save(); render(); if(panelShown()) buildList();
+}
 function openAddSide(di){
   sideDay=di;
   document.getElementById('sideDayLabel').textContent=DAYS[di].day;
@@ -1080,28 +1092,54 @@ function saveSide(){
   const ing=collectIngredients('side-ings');
   if(!ing.length){ alert('Add at least one ingredient (name required).'); return; }
   const steps=document.getElementById('side-steps').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  (sides[sideDay]=sides[sideDay]||[]).push({name,ing,steps});
+  const existing=sideCatalog.find(s=>s.name.toLowerCase()===name.toLowerCase());
+  if(existing){ existing.name=name; existing.ing=ing; existing.steps=steps; }  // edit in place
+  else sideCatalog.push({name,ing,steps});
+  daySides[sideDay]=daySides[sideDay]||[];                                     // attach to the day it was added from
+  if(!daySides[sideDay].includes(name)) daySides[sideDay].push(name);
   save(); render(); closeModal('addSideModal');
-  if(document.getElementById('panel').classList.contains('show')) buildList();
+  if(panelShown()) buildList();
 }
-function deleteSide(di,si){
-  if(!sides[di]||si<0||si>=sides[di].length) return;
-  if(!confirm('Delete this side?')) return;
-  sides[di].splice(si,1);
-  if(!sides[di].length) delete sides[di];
+function deleteSide(name){                // delete a side from the catalog (and from every day)
+  const i=sideCatalog.findIndex(s=>s.name===name); if(i<0) return;
+  if(!confirm('Delete this side from your saved sides (removes it from all days)?')) return;
+  sideCatalog.splice(i,1);
+  Object.keys(daySides).forEach(di=>{ daySides[di]=daySides[di].filter(n=>n!==name); if(!daySides[di].length) delete daySides[di]; });
   save(); render(); closeModal('recipeModal');
-  if(document.getElementById('panel').classList.contains('show')) buildList();
+  if(panelShown()) buildList();
 }
 
 /* ---------- STATE BUNDLE ----------
    The whole shared household record, in one object. */
 function collectDoc(){
-  return {selections,thistleNights,householdSel,storePrefs,customItems,customMeals,customQty,barcodeMap,sides};
+  return {selections,thistleNights,householdSel,storePrefs,customItems,customMeals,customQty,barcodeMap,sideCatalog,daySides};
 }
 function assignDoc(o){
   selections=o.selections||{}; thistleNights=o.thistleNights||{}; householdSel=o.householdSel||{};
-  storePrefs=o.storePrefs||{}; customItems=o.customItems||[]; customMeals=o.customMeals||{}; customQty=o.customQty||{};
-  barcodeMap=o.barcodeMap||{}; sides=o.sides||{};
+  storePrefs=o.storePrefs||{}; customItems=o.customItems||[]; customQty=o.customQty||{}; barcodeMap=o.barcodeMap||{};
+  // custom dinners: now a flat global catalog (migrate old per-day object {di:[...]})
+  if(Array.isArray(o.customMeals)) customMeals=o.customMeals;
+  else if(o.customMeals && typeof o.customMeals==='object'){ customMeals=[]; Object.keys(o.customMeals).forEach(k=>(o.customMeals[k]||[]).forEach(m=>customMeals.push(m))); }
+  else customMeals=[];
+  // sides: now a reusable catalog + per-day name lists (migrate old per-day side objects {di:[{...}]})
+  if(Array.isArray(o.sideCatalog) || o.daySides){
+    sideCatalog=Array.isArray(o.sideCatalog)?o.sideCatalog:[];
+    daySides=o.daySides||{};
+  } else if(o.sides && typeof o.sides==='object'){
+    sideCatalog=[]; daySides={};
+    Object.keys(o.sides).forEach(di=>(o.sides[di]||[]).forEach(s=>{
+      if(!sideCatalog.some(x=>x.name===s.name)) sideCatalog.push(s);
+      daySides[di]=daySides[di]||[]; if(!daySides[di].includes(s.name)) daySides[di].push(s.name);
+    }));
+  } else { sideCatalog=[]; daySides={}; }
+  // selections: migrate old numeric indices -> dinner names (best-effort for built-ins)
+  Object.keys(selections).forEach(di=>{
+    const v=selections[di];
+    if(typeof v==='number'){
+      const builtins=(DAYS[di]&&DAYS[di].meals)||[];
+      if(v>=0 && v<builtins.length) selections[di]=builtins[v].name; else delete selections[di];
+    }
+  });
   customItems.forEach(c=>HH_DEFAULT[c.n]=c.s);  // register custom household defaults
   Object.assign(QTY,customQty);                 // re-register custom meal ingredient quantities
 }
@@ -1201,7 +1239,7 @@ function initSync(){
     if(d.authed) startApp(); else showLogin();
   }).catch(()=>{ setSync('local'); });
 }
-function resetWeek(){selections={};thistleNights={};householdSel={};save();render();renderHousehold();document.getElementById('panel').classList.remove('show');}
+function resetWeek(){selections={};thistleNights={};householdSel={};daySides={};save();render();renderHousehold();document.getElementById('panel').classList.remove('show');}
 function resetPrefs(){if(confirm('Forget all learned store choices and go back to defaults?')){storePrefs={};save();renderHousehold();if(document.getElementById('panel').classList.contains('show'))buildList();}}
 
 load();

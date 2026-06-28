@@ -4,8 +4,8 @@ A repeatable weekly dinner planner with a consolidated, store-by-store grocery l
 
 ## What it does
 
-- **Weekly menu** — 7 days, each with several dinner options to choose from (mix and match freely — no fixed cuisine per day).
-- **Add sides** — attach side dishes (with their own ingredients and optional instructions) to any day; their ingredients flow into the grocery list too.
+- **Weekly menu** — pick any dinner for any day from a single dropdown of the whole recipe catalog (built-in dinners plus your own). No fixed cuisine per day.
+- **Reusable sides** — build a catalog of side dishes (each with its own ingredients and optional instructions) and attach any side to any day; their ingredients flow into the grocery list too.
 - **Recipes built in** — every meal has a "📖 View recipe" link showing GF notes, the ingredient list with quantities, and step-by-step cooking instructions.
 - **Add your own dinners** — the "➕ Add dinner" button lets you create a new meal (name, description, GF status, ingredients with stores/quantities, and cooking steps). Custom dinners appear as selectable options on their day, flow into the grocery list, and are saved on the device.
 - **Gluten-free aware** — every meal is GF as written or flagged "GF swap" with the exact substitution (a household requirement).

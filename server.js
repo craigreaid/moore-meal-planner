@@ -73,7 +73,7 @@ app.get('/api/me', (req, res) => res.json({ authed: isAuthed(req) }));
 function defaultDoc() {
   return {
     selections: {}, thistleNights: {}, householdSel: {},
-    storePrefs: {}, customItems: [], customMeals: {}, customQty: {}, barcodeMap: {}, sides: {},
+    storePrefs: {}, customItems: [], customMeals: [], customQty: {}, barcodeMap: {}, sideCatalog: [], daySides: {},
     rev: 0, updatedAt: 0
   };
 }

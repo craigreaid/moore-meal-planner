@@ -12,7 +12,7 @@ This is guidance for making changes to the Moore Family Meal & Grocery Planner w
 
 ## Sync & login (how the shared state flows)
 
-- The whole shared record is `{selections, thistleNights, householdSel, storePrefs, customItems, customMeals, customQty, barcodeMap, sides}` (plus server-managed `rev`/`updatedAt`). `collectDoc()` bundles it; `assignDoc(o)` loads it into the module vars (and re-registers `HH_DEFAULT` + `QTY`).
+- The whole shared record is `{selections, thistleNights, householdSel, storePrefs, customItems, customMeals, customQty, barcodeMap, sideCatalog, daySides}` (plus server-managed `rev`/`updatedAt`). `collectDoc()` bundles it; `assignDoc(o)` loads it into the module vars, **runs migrations** for old shapes (numeric `selections`, per-day `customMeals`/`sides`), and re-registers `HH_DEFAULT` + `QTY`.
 - **`save()`** writes the localStorage cache, marks `dirty`, and `flush()`es to the server over the WebSocket (unless offline or `awaitingAck` — then it flushes later). All existing call sites keep working unchanged.
 - **`applyDoc(doc)`** applies an authoritative copy received from the server and re-renders. Incoming `state` messages are ignored while `awaitingAck` (so a change you just sent isn't clobbered by an older broadcast).
 - **`load()`** still loads the localStorage cache for an instant first paint; the server's `state` message then replaces it once connected.
@@ -46,22 +46,25 @@ This is guidance for making changes to the Moore Family Meal & Grocery Planner w
 
 ## State (persisted to localStorage key `mooreMenu`)
 
-- `selections` — day index → chosen meal index.
+- `selections` — day index → **chosen dinner name** (string). Any day can pick any dinner from the shared catalog (a `<select>` dropdown), so selections key by name, not index. (Old numeric-index selections are migrated to names in `assignDoc`.)
 - `thistleNights` — day index → true when adults eat Thistle that night.
 - `householdSel` — household/staple item name → true (checked this week).
 - `storePrefs` — item name → preferred store. This is the "learning": a dropdown change writes here and overrides defaults everywhere.
 - `customItems` — user-added household items `[{n, s}]`.
-- `customMeals` — day index → array of user-added dinners `[{name, gf, note?, desc, ing, steps, custom:true}]`. Merged into a day's options by `mealsFor(di)`, which returns `DAYS[di].meals.concat(customMeals[di]||[])`. **Selections index into this combined list**, so always use `mealsFor(di)` (not `DAYS[di].meals`) when resolving a selected meal.
-- `sides` — day index → array of side dishes `[{name, ing:[[item,store]], steps}]`. Independent of the radio-selected dinner (a day can have any number of sides). Side ingredients flow into the grocery list scaled to that day's servings (Thistle-aware). Added via `openAddSide(di)`/`saveSide()`, viewed via `openSideRecipe(di,si)` (which calls the shared `showRecipe(m, opts)`), removed via `deleteSide(di,si)`.
-- `customQty` — ingredient name → `[amount, unit, 0]` for ingredients introduced by custom meals. Merged into `QTY` (via `Object.assign(QTY, customQty)`) on load and on save so the grocery list can show quantities. Built-in `QTY` entries are never overwritten.
-- `save()` / `load()` handle persistence (all of the above live under the `mooreMenu` key); `resetWeek()` clears weekly choices but **keeps** `storePrefs`, `customMeals`, and `customQty` (they're part of the "database", not the week); `resetPrefs()` clears learned stores.
+- `customMeals` — **flat global catalog** of user-added dinners `[{name, gf, note?, desc, ing, steps, custom:true}]` (NOT per-day anymore). The full dinner catalog is `allDinners()` = `BUILTIN_MEALS` (all `DAYS[*].meals` flattened) + `customMeals`; resolve a selected dinner with `dinnerByName(name)`. Dinner names are unique across the catalog (also the `RECIPES` key) — `saveMeal` rejects duplicates.
+- `sideCatalog` — **flat global catalog** of reusable side dishes `[{name, ing:[[item,store]], steps}]`; resolve with `sideByName(name)`.
+- `daySides` — day index → array of side **names** attached to that day (references into `sideCatalog`). A side can be attached to many days. Side ingredients flow into the grocery list scaled to that day's servings (Thistle-aware).
+- `customQty` — ingredient name → `[amount, unit, 0]` for ingredients introduced by custom dinners/sides. Merged into `QTY` (via `Object.assign(QTY, customQty)`) on load and on save so the grocery list can show quantities. Built-in `QTY` entries are never overwritten.
+- `save()` / `load()` handle persistence (all of the above live under the `mooreMenu` key); `resetWeek()` clears the week (`selections`, `thistleNights`, `householdSel`, `daySides`) but **keeps** `storePrefs`, `customMeals`, `sideCatalog`, and `customQty` (the reusable "database"); `resetPrefs()` clears learned stores.
 
 ## Recipes & custom dinners
 
-- **Viewing a recipe:** every meal renders a "📖 View recipe" button (`button.link[data-recipe]`) that calls `openRecipe(di, mi)`. The handler uses `e.stopPropagation()` so clicking it does **not** also select the meal. Steps come from `m.steps` (custom) or `RECIPES[m.name]` (built-in).
-- **Adding a dinner:** the "➕ Add dinner" toolbar button opens `#addMealModal` via `openAddMeal()`. `saveMeal()` reads the form, builds a meal object (with `custom:true`), pushes it to `customMeals[di]`, and registers any new ingredient quantities into `customQty`/`QTY`.
-- **Deleting a custom dinner:** `deleteCustomMeal(di, mi)` (button shown inside the recipe modal for custom meals) splices it from `customMeals[di]` and **fixes up `selections[di]`** (clears it if it pointed at the deleted meal, decrements it if it pointed later). Built-in meals can't be deleted.
-- **Modals:** generic `openModal(id)` / `closeModal(id)` toggle the `.show` class and lock body scroll; Escape closes both. The recipe viewer (`#recipeModal`) and add-meal form (`#addMealModal`) are plain overlay `<div>`s near the end of the markup.
+- **Per-day UI:** each day card has a dinner `<select class="dinnersel">` (all catalog dinners, grouped Dinners / Your dinners) and a sides area: chips for attached sides + an `<select class="addsidesel">` listing saved sides not yet on the day plus a "＋ New side…" option. All handlers are bound in `render()` after building the grid.
+- **Viewing a recipe:** the selected dinner shows a "📖 View recipe" link → `openDinnerRecipe(di)`; each side chip has a "recipe" link → `openSideRecipe(di, name)`. Both call the shared `showRecipe(m, opts)`. Steps come from `m.steps` (custom/side) or `RECIPES[m.name]` (built-in dinner).
+- **Adding a dinner:** "➕ Add dinner" opens `#addMealModal` via `openAddMeal()` (no day picker — dinners are global). `saveMeal()` rejects duplicate names, builds the meal (`custom:true`), pushes to `customMeals`, registers new quantities via `collectIngredients('am-ings')`.
+- **Sides:** `openAddSide(di)` opens `#addSideModal`; `saveSide()` creates/edits a `sideCatalog` entry by name and attaches it to `daySides[sideDay]`. Attach an existing side via `addDaySide(di,name)`; detach from one day via `removeDaySide(di,name)` (keeps it in the catalog); delete from the catalog (and all days) via `deleteSide(name)` from the side recipe modal.
+- **Deleting a custom dinner:** `deleteCustomMeal(name)` (button in the recipe modal for custom dinners) removes it from `customMeals` and clears any `selections[di]` that referenced it. Built-in dinners can't be deleted.
+- **Modals:** generic `openModal(id)` / `closeModal(id)` toggle the `.show` class and lock body scroll; Escape closes them. `#recipeModal`, `#addMealModal`, and `#addSideModal` are plain overlay `<div>`s near the end of the markup.
 
 ## Common changes (recipes)
 
