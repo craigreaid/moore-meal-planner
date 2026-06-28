@@ -821,7 +821,11 @@ function dinnerOptionsHtml(selName){
   const byName=(a,b)=>a.localeCompare(b);
   const builtins=BUILTIN_MEALS.map(m=>m.name).sort(byName);
   const customs=customMeals.map(m=>m.name).sort(byName);
-  const opt=n=>`<option value="${escAttr(n)}"${n===selName?' selected':''}>${escHtml(n)}</option>`;
+  const opt=n=>{
+    const m=dinnerByName(n);
+    const tag=m?(m.gf==='native'?' (GF)':(m.gf==='adapt'?' (GF swap)':'')):'';
+    return `<option value="${escAttr(n)}"${n===selName?' selected':''}>${escHtml(n)+tag}</option>`;
+  };
   let h=`<option value="">— no dinner —</option>`;
   h+=`<optgroup label="Dinners">${builtins.map(opt).join('')}</optgroup>`;
   if(customs.length) h+=`<optgroup label="Your dinners">${customs.map(opt).join('')}</optgroup>`;
