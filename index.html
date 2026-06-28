@@ -346,7 +346,7 @@ const STORES = {
    gf: "native" = gluten-free as written, "adapt" = needs a swap (note shown)
    ingredients: [item, store]  (store keys must match STORES) ---------- */
 const DAYS = [
-  {day:"Monday", theme:"Meatball Monday", meals:[
+  {day:"Monday", theme:"Meatballs", meals:[
     {name:"Marvelous Meatballs & Marinara", gf:"adapt", note:"Serve over GF pasta", desc:"Beef-pork meatballs in marinara over gluten-free pasta.",
       ing:[["Ground beef","Smiths"],["Ground pork","Smiths"],["Marinara sauce","Walmart"],["GF pasta","Whole Foods"],["Parmesan","Smiths"],["Eggs","Smiths"],["Onion","Smiths"],["Garlic","Smiths"]]},
     {name:"Mediterranean Meatball Bowls", gf:"native", desc:"Herbed beef meatballs over rice with cucumber, tomato & tzatziki.",
@@ -358,7 +358,7 @@ const DAYS = [
     {name:"Mushroom & Beef Meatballs (Zoodles)", gf:"native", desc:"Savory meatballs over zucchini noodles in a light gravy.",
       ing:[["Ground beef","Smiths"],["Mushrooms","Smiths"],["Zucchini","Smiths"],["Beef broth","Walmart"],["Onion","Smiths"]]}
   ]},
-  {day:"Tuesday", theme:"Taco Tuesday", meals:[
+  {day:"Tuesday", theme:"Tacos", meals:[
     {name:"Classic Beef Tacos", gf:"native", desc:"Seasoned beef in corn tortillas with all the toppings.",
       ing:[["Ground beef","Smiths"],["Corn tortillas","Smiths"],["Taco seasoning","Walmart"],["Cheddar","Smiths"],["Lettuce","Smiths"],["Tomatoes","Smiths"],["Salsa","Walmart"]]},
     {name:"Tinga Chicken Tacos", gf:"native", desc:"Smoky shredded chicken in chipotle-tomato sauce.",
@@ -370,7 +370,7 @@ const DAYS = [
     {name:"Turkey Taco Bowls", gf:"native", desc:"Lean ground turkey over cilantro-lime rice.",
       ing:[["Ground turkey","Smiths"],["White rice","Walmart"],["Black beans","Walmart"],["Lime","Smiths"],["Cilantro","Smiths"],["Salsa","Walmart"]]}
   ]},
-  {day:"Wednesday", theme:"Wok Wednesday", meals:[
+  {day:"Wednesday", theme:"Stir-Fry", meals:[
     {name:"Wok Chicken Stir-Fry", gf:"adapt", note:"Use tamari instead of soy sauce", desc:"Chicken & crisp veggies in a tamari-ginger sauce over rice.",
       ing:[["Chicken breast","Smiths"],["Tamari (GF)","Whole Foods"],["Mixed stir-fry veg","Smiths"],["White rice","Walmart"],["Ginger","Smiths"],["Garlic","Smiths"]]},
     {name:"Walnut Shrimp", gf:"adapt", note:"Use cornstarch coating", desc:"Crispy shrimp with candied walnuts in creamy sauce.",
@@ -382,7 +382,7 @@ const DAYS = [
     {name:"Wok Pork & Peppers", gf:"adapt", note:"Use tamari instead of soy sauce", desc:"Quick pork stir-fry with bell peppers and onion.",
       ing:[["Pork loin","Smiths"],["Bell peppers","Smiths"],["Onion","Smiths"],["Tamari (GF)","Whole Foods"],["White rice","Walmart"]]}
   ]},
-  {day:"Thursday", theme:"Thai Thursday", meals:[
+  {day:"Thursday", theme:"Thai", meals:[
     {name:"Thai Chicken Curry", gf:"native", desc:"Coconut red curry with chicken and vegetables over rice.",
       ing:[["Chicken thighs","Smiths"],["Red curry paste","Whole Foods"],["Coconut milk","Whole Foods"],["Bell peppers","Smiths"],["White rice","Walmart"],["Basil","Smiths"]]},
     {name:"Thai Peanut Noodles", gf:"native", desc:"Rice noodles tossed in creamy peanut sauce with veg.",
@@ -394,7 +394,7 @@ const DAYS = [
     {name:"Thai Turkey Lettuce Wraps", gf:"adapt", note:"Use tamari instead of soy sauce", desc:"Savory turkey larb-style filling in crisp lettuce cups.",
       ing:[["Ground turkey","Smiths"],["Butter lettuce","Smiths"],["Tamari (GF)","Whole Foods"],["Lime","Smiths"],["Mint","Smiths"],["Carrots","Smiths"]]}
   ]},
-  {day:"Friday", theme:"Fish & Fajita Friday", meals:[
+  {day:"Friday", theme:"Fish & Fajitas", meals:[
     {name:"Chicken Fajitas", gf:"native", desc:"Sizzling peppers, onions & chicken in corn tortillas.",
       ing:[["Chicken breast","Smiths"],["Bell peppers","Smiths"],["Onion","Smiths"],["Corn tortillas","Smiths"],["Fajita seasoning","Walmart"],["Lime","Smiths"]]},
     {name:"Foil-Pack Salmon & Veggies", gf:"native", desc:"Lemon-herb salmon roasted with asparagus and potatoes.",
@@ -406,7 +406,7 @@ const DAYS = [
     {name:"GF Flatbread Pizzas", gf:"adapt", note:"Use GF flatbread/crust", desc:"Make-your-own gluten-free flatbread pizzas.",
       ing:[["GF flatbread","Whole Foods"],["Pizza sauce","Walmart"],["Mozzarella","Smiths"],["Pepperoni","Smiths"],["Bell peppers","Smiths"]]}
   ]},
-  {day:"Saturday", theme:"Sizzle Saturday", meals:[
+  {day:"Saturday", theme:"Grill & Skillet", meals:[
     {name:"Sizzling Steak & Potatoes", gf:"native", desc:"Grilled steak with roasted potatoes and salad.",
       ing:[["Ribeye steaks","Smiths"],["Baby potatoes","Smiths"],["Salad greens","Smiths"],["Butter","Smiths"],["Garlic","Smiths"]]},
     {name:"Smoky BBQ Chicken", gf:"adapt", note:"Use GF BBQ sauce", desc:"Grilled chicken glazed with gluten-free BBQ sauce.",
@@ -418,7 +418,7 @@ const DAYS = [
     {name:"Shrimp Skewers", gf:"native", desc:"Grilled marinated shrimp skewers with veggies.",
       ing:[["Shrimp","Whole Foods"],["Zucchini","Smiths"],["Cherry tomatoes","Smiths"],["Bell peppers","Smiths"],["Olive oil","Walmart"]]}
   ]},
-  {day:"Sunday", theme:"Slow-Cooker Sunday", meals:[
+  {day:"Sunday", theme:"Slow-Cooker", meals:[
     {name:"Slow-Cooker Pot Roast", gf:"native", desc:"Fall-apart beef roast with carrots and potatoes.",
       ing:[["Chuck roast","Smiths"],["Carrots","Smiths"],["Potatoes","Smiths"],["Onion","Smiths"],["Beef broth","Walmart"]]},
     {name:"Slow-Cooker Salsa Chicken", gf:"native", desc:"Three-ingredient shredded salsa chicken over rice.",

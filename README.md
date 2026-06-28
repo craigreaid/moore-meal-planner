@@ -4,7 +4,7 @@ A repeatable weekly dinner planner with a consolidated, store-by-store grocery l
 
 ## What it does
 
-- **Alliterative weekly menu** — 7 days, each with a theme (Taco Tuesday, Thai Thursday, etc.) and 5 dinner options to choose from.
+- **Themed weekly menu** — 7 days, each with a cuisine theme (Tacos, Thai, etc.) and 5 dinner options to choose from.
 - **Recipes built in** — every meal has a "📖 View recipe" link showing GF notes, the ingredient list with quantities, and step-by-step cooking instructions.
 - **Add your own dinners** — the "➕ Add dinner" button lets you create a new meal (name, description, GF status, ingredients with stores/quantities, and cooking steps). Custom dinners appear as selectable options on their day, flow into the grocery list, and are saved on the device.
 - **Gluten-free aware** — every meal is GF as written or flagged "GF swap" with the exact substitution (a household requirement).
