@@ -12,7 +12,7 @@ This is guidance for making changes to the Moore Family Meal & Grocery Planner w
 
 ## Sync & login (how the shared state flows)
 
-- The whole shared record is the same object as before — `{selections, thistleNights, householdSel, storePrefs, customItems, customMeals, customQty}` (plus server-managed `rev`/`updatedAt`). `collectDoc()` bundles it; `assignDoc(o)` loads it into the module vars (and re-registers `HH_DEFAULT` + `QTY`).
+- The whole shared record is `{selections, thistleNights, householdSel, storePrefs, customItems, customMeals, customQty, barcodeMap, sides}` (plus server-managed `rev`/`updatedAt`). `collectDoc()` bundles it; `assignDoc(o)` loads it into the module vars (and re-registers `HH_DEFAULT` + `QTY`).
 - **`save()`** writes the localStorage cache, marks `dirty`, and `flush()`es to the server over the WebSocket (unless offline or `awaitingAck` — then it flushes later). All existing call sites keep working unchanged.
 - **`applyDoc(doc)`** applies an authoritative copy received from the server and re-renders. Incoming `state` messages are ignored while `awaitingAck` (so a change you just sent isn't clobbered by an older broadcast).
 - **`load()`** still loads the localStorage cache for an instant first paint; the server's `state` message then replaces it once connected.
@@ -32,7 +32,7 @@ This is guidance for making changes to the Moore Family Meal & Grocery Planner w
 
 - `STORES` — object of store name → `{color, role}`. The four stores: Smiths, Whole Foods, Walmart, Amazon.
 - `STORE_ORDER` — array controlling the order stores appear in the grocery list and dropdowns.
-- `DAYS` — array of 7 day objects: `{day, theme, meals:[...]}`. Each meal is `{name, gf, note?, desc, ing:[[item, store], ...]}`.
+- `DAYS` — array of 7 day objects: `{day, meals:[...]}` (no cuisine theme/category — options can be diverse per day). Each meal is `{name, gf, note?, desc, ing:[[item, store], ...]}`.
   - `gf` is `"native"` (GF as written) or `"adapt"` (needs a swap — `note` must explain it).
   - Each ingredient is `[itemName, defaultStore]`; `defaultStore` **must** be a key in `STORES`.
 - `RECIPES` — map of `mealName → [step, step, ...]` (cooking instructions). Keyed by the exact meal `name`; built-in meals look up here. **Add a `RECIPES` entry whenever you add a built-in meal** (custom meals carry their own `steps` instead — see below).
@@ -52,6 +52,7 @@ This is guidance for making changes to the Moore Family Meal & Grocery Planner w
 - `storePrefs` — item name → preferred store. This is the "learning": a dropdown change writes here and overrides defaults everywhere.
 - `customItems` — user-added household items `[{n, s}]`.
 - `customMeals` — day index → array of user-added dinners `[{name, gf, note?, desc, ing, steps, custom:true}]`. Merged into a day's options by `mealsFor(di)`, which returns `DAYS[di].meals.concat(customMeals[di]||[])`. **Selections index into this combined list**, so always use `mealsFor(di)` (not `DAYS[di].meals`) when resolving a selected meal.
+- `sides` — day index → array of side dishes `[{name, ing:[[item,store]], steps}]`. Independent of the radio-selected dinner (a day can have any number of sides). Side ingredients flow into the grocery list scaled to that day's servings (Thistle-aware). Added via `openAddSide(di)`/`saveSide()`, viewed via `openSideRecipe(di,si)` (which calls the shared `showRecipe(m, opts)`), removed via `deleteSide(di,si)`.
 - `customQty` — ingredient name → `[amount, unit, 0]` for ingredients introduced by custom meals. Merged into `QTY` (via `Object.assign(QTY, customQty)`) on load and on save so the grocery list can show quantities. Built-in `QTY` entries are never overwritten.
 - `save()` / `load()` handle persistence (all of the above live under the `mooreMenu` key); `resetWeek()` clears weekly choices but **keeps** `storePrefs`, `customMeals`, and `customQty` (they're part of the "database", not the week); `resetPrefs()` clears learned stores.
 

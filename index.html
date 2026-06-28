@@ -193,6 +193,14 @@
   .scancode{font-size:12px;color:var(--muted);text-align:center;margin-bottom:12px;font-variant-numeric:tabular-nums}
   .scanstatus{font-size:13px;color:var(--accent2);min-height:18px;margin:6px 0 2px;text-align:center}
   button.scanbtn{background:var(--smiths);color:#fff;border-color:transparent}
+  /* ---------- per-day sides ---------- */
+  .sides{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+  .sideshd{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+  .sideitem{display:flex;align-items:center;gap:8px;font-size:13.5px;padding:3px 0}
+  .sideitem .sidename{flex:1}
+  .sideitem .sideview{font-size:12px}
+  button.addside{font-size:12.5px;padding:5px 11px;margin-top:4px}
+  @media print{ .sides .sideview, .sides .rm, button.addside{display:none} .sideshd{color:var(--ink)} }
 </style>
 </head>
 <body>
@@ -333,6 +341,29 @@
   </div>
 </div>
 
+<!-- Add a side -->
+<div class="overlay" id="addSideModal" onclick="if(event.target===this)closeModal('addSideModal')">
+  <div class="modal">
+    <div class="mhead">
+      <div><div class="theme" id="sideDayLabel"></div><h2>Add a side</h2></div>
+      <button class="mclose" onclick="closeModal('addSideModal')" title="Close">×</button>
+    </div>
+    <div class="mbody">
+      <div class="fld"><span class="lab">Side name</span>
+        <input id="side-name" type="text" placeholder="e.g. Garlic bread, House salad, Roasted broccoli" autocomplete="off"></div>
+      <div class="fld"><span class="lab">Ingredients <span style="font-weight:400">— item, store, and optional quantity</span></span>
+        <div id="side-ings"></div>
+        <button onclick="addSideIngRow()" style="font-size:13px;margin-top:4px">+ Add ingredient</button></div>
+      <div class="fld"><span class="lab">Instructions <span style="font-weight:400">— optional, one step per line</span></span>
+        <textarea id="side-steps" placeholder="Optional — e.g. Toss with olive oil and roast at 425°F for 20 minutes."></textarea></div>
+      <div class="mfoot">
+        <button onclick="closeModal('addSideModal')">Cancel</button>
+        <button class="primary" onclick="saveSide()">Save side</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ---------- STORE CONFIG ---------- */
 const STORES = {
@@ -346,7 +377,7 @@ const STORES = {
    gf: "native" = gluten-free as written, "adapt" = needs a swap (note shown)
    ingredients: [item, store]  (store keys must match STORES) ---------- */
 const DAYS = [
-  {day:"Monday", theme:"Meatballs", meals:[
+  {day:"Monday", meals:[
     {name:"Marvelous Meatballs & Marinara", gf:"adapt", note:"Serve over GF pasta", desc:"Beef-pork meatballs in marinara over gluten-free pasta.",
       ing:[["Ground beef","Smiths"],["Ground pork","Smiths"],["Marinara sauce","Walmart"],["GF pasta","Whole Foods"],["Parmesan","Smiths"],["Eggs","Smiths"],["Onion","Smiths"],["Garlic","Smiths"]]},
     {name:"Mediterranean Meatball Bowls", gf:"native", desc:"Herbed beef meatballs over rice with cucumber, tomato & tzatziki.",
@@ -358,7 +389,7 @@ const DAYS = [
     {name:"Mushroom & Beef Meatballs (Zoodles)", gf:"native", desc:"Savory meatballs over zucchini noodles in a light gravy.",
       ing:[["Ground beef","Smiths"],["Mushrooms","Smiths"],["Zucchini","Smiths"],["Beef broth","Walmart"],["Onion","Smiths"]]}
   ]},
-  {day:"Tuesday", theme:"Tacos", meals:[
+  {day:"Tuesday", meals:[
     {name:"Classic Beef Tacos", gf:"native", desc:"Seasoned beef in corn tortillas with all the toppings.",
       ing:[["Ground beef","Smiths"],["Corn tortillas","Smiths"],["Taco seasoning","Walmart"],["Cheddar","Smiths"],["Lettuce","Smiths"],["Tomatoes","Smiths"],["Salsa","Walmart"]]},
     {name:"Tinga Chicken Tacos", gf:"native", desc:"Smoky shredded chicken in chipotle-tomato sauce.",
@@ -370,7 +401,7 @@ const DAYS = [
     {name:"Turkey Taco Bowls", gf:"native", desc:"Lean ground turkey over cilantro-lime rice.",
       ing:[["Ground turkey","Smiths"],["White rice","Walmart"],["Black beans","Walmart"],["Lime","Smiths"],["Cilantro","Smiths"],["Salsa","Walmart"]]}
   ]},
-  {day:"Wednesday", theme:"Stir-Fry", meals:[
+  {day:"Wednesday", meals:[
     {name:"Wok Chicken Stir-Fry", gf:"adapt", note:"Use tamari instead of soy sauce", desc:"Chicken & crisp veggies in a tamari-ginger sauce over rice.",
       ing:[["Chicken breast","Smiths"],["Tamari (GF)","Whole Foods"],["Mixed stir-fry veg","Smiths"],["White rice","Walmart"],["Ginger","Smiths"],["Garlic","Smiths"]]},
     {name:"Walnut Shrimp", gf:"adapt", note:"Use cornstarch coating", desc:"Crispy shrimp with candied walnuts in creamy sauce.",
@@ -382,7 +413,7 @@ const DAYS = [
     {name:"Wok Pork & Peppers", gf:"adapt", note:"Use tamari instead of soy sauce", desc:"Quick pork stir-fry with bell peppers and onion.",
       ing:[["Pork loin","Smiths"],["Bell peppers","Smiths"],["Onion","Smiths"],["Tamari (GF)","Whole Foods"],["White rice","Walmart"]]}
   ]},
-  {day:"Thursday", theme:"Thai", meals:[
+  {day:"Thursday", meals:[
     {name:"Thai Chicken Curry", gf:"native", desc:"Coconut red curry with chicken and vegetables over rice.",
       ing:[["Chicken thighs","Smiths"],["Red curry paste","Whole Foods"],["Coconut milk","Whole Foods"],["Bell peppers","Smiths"],["White rice","Walmart"],["Basil","Smiths"]]},
     {name:"Thai Peanut Noodles", gf:"native", desc:"Rice noodles tossed in creamy peanut sauce with veg.",
@@ -394,7 +425,7 @@ const DAYS = [
     {name:"Thai Turkey Lettuce Wraps", gf:"adapt", note:"Use tamari instead of soy sauce", desc:"Savory turkey larb-style filling in crisp lettuce cups.",
       ing:[["Ground turkey","Smiths"],["Butter lettuce","Smiths"],["Tamari (GF)","Whole Foods"],["Lime","Smiths"],["Mint","Smiths"],["Carrots","Smiths"]]}
   ]},
-  {day:"Friday", theme:"Fish & Fajitas", meals:[
+  {day:"Friday", meals:[
     {name:"Chicken Fajitas", gf:"native", desc:"Sizzling peppers, onions & chicken in corn tortillas.",
       ing:[["Chicken breast","Smiths"],["Bell peppers","Smiths"],["Onion","Smiths"],["Corn tortillas","Smiths"],["Fajita seasoning","Walmart"],["Lime","Smiths"]]},
     {name:"Foil-Pack Salmon & Veggies", gf:"native", desc:"Lemon-herb salmon roasted with asparagus and potatoes.",
@@ -406,7 +437,7 @@ const DAYS = [
     {name:"GF Flatbread Pizzas", gf:"adapt", note:"Use GF flatbread/crust", desc:"Make-your-own gluten-free flatbread pizzas.",
       ing:[["GF flatbread","Whole Foods"],["Pizza sauce","Walmart"],["Mozzarella","Smiths"],["Pepperoni","Smiths"],["Bell peppers","Smiths"]]}
   ]},
-  {day:"Saturday", theme:"Grill & Skillet", meals:[
+  {day:"Saturday", meals:[
     {name:"Sizzling Steak & Potatoes", gf:"native", desc:"Grilled steak with roasted potatoes and salad.",
       ing:[["Ribeye steaks","Smiths"],["Baby potatoes","Smiths"],["Salad greens","Smiths"],["Butter","Smiths"],["Garlic","Smiths"]]},
     {name:"Smoky BBQ Chicken", gf:"adapt", note:"Use GF BBQ sauce", desc:"Grilled chicken glazed with gluten-free BBQ sauce.",
@@ -418,7 +449,7 @@ const DAYS = [
     {name:"Shrimp Skewers", gf:"native", desc:"Grilled marinated shrimp skewers with veggies.",
       ing:[["Shrimp","Whole Foods"],["Zucchini","Smiths"],["Cherry tomatoes","Smiths"],["Bell peppers","Smiths"],["Olive oil","Walmart"]]}
   ]},
-  {day:"Sunday", theme:"Slow-Cooker", meals:[
+  {day:"Sunday", meals:[
     {name:"Slow-Cooker Pot Roast", gf:"native", desc:"Fall-apart beef roast with carrots and potatoes.",
       ing:[["Chuck roast","Smiths"],["Carrots","Smiths"],["Potatoes","Smiths"],["Onion","Smiths"],["Beef broth","Walmart"]]},
     {name:"Slow-Cooker Salsa Chicken", gf:"native", desc:"Three-ingredient shredded salsa chicken over rice.",
@@ -481,6 +512,7 @@ let customItems = [];    // user-added household items: {n:name, s:default store
 let customMeals = {};    // day index -> array of user-added meals {name,gf,note?,desc,ing,steps,custom:true}
 let customQty = {};      // ingredient name -> [amount, unit, 0] for custom meal ingredients
 let barcodeMap = {};     // scanned barcode -> {n:name, s:store} so re-scans auto-fill
+let sides = {};          // day index -> array of side dishes {name, ing:[[item,store]], steps}
 
 /* ---------- FAMILY-OF-4 QUANTITIES ----------
    [amount, unit, staple]  amount = per single dinner for 4 people.
@@ -785,7 +817,7 @@ function render(){
   DAYS.forEach((d,di)=>{
     const card = document.createElement('div');
     card.className = 'day';
-    let html = `<div class="theme">${d.theme}</div><h2>${d.day}${thistleNights[di]?' <span class="tbadge">🌿 Thistle</span>':''}</h2><div class="meals">`;
+    let html = `<h2>${d.day}${thistleNights[di]?' <span class="tbadge">🌿 Thistle</span>':''}</h2><div class="meals">`;
     mealsFor(di).forEach((m,mi)=>{
       const sel = selections[di]===mi ? 'sel':'';
       const badge = m.gf==='native'
@@ -803,6 +835,13 @@ function render(){
     const on = thistleNights[di] ? 'on' : '';
     html += `<label class="thistle ${on}" data-tog="${di}">
       <input type="checkbox" ${on?'checked':''}> 🌿 Adults on Thistle — cook for kids only (serves ${KIDS})</label>`;
+    html += `<div class="sides"><div class="sideshd">Sides</div>`;
+    (sides[di]||[]).forEach((s,si)=>{
+      html += `<div class="sideitem"><span class="sidename">🥗 ${s.name}</span>
+        <button class="link sideview" data-d="${di}" data-s="${si}">recipe</button>
+        <button class="rm sidedel" data-d="${di}" data-s="${si}" title="Remove side">×</button></div>`;
+    });
+    html += `<button class="addside" data-addside="${di}">+ Add side</button></div>`;
     card.innerHTML = html;
     grid.appendChild(card);
   });
@@ -825,6 +864,9 @@ function render(){
       save(); render();
     });
   });
+  document.querySelectorAll('button[data-addside]').forEach(b=>b.addEventListener('click',()=>openAddSide(+b.dataset.addside)));
+  document.querySelectorAll('button.sideview').forEach(b=>b.addEventListener('click',()=>openSideRecipe(+b.dataset.d,+b.dataset.s)));
+  document.querySelectorAll('button.sidedel').forEach(b=>b.addEventListener('click',()=>deleteSide(+b.dataset.d,+b.dataset.s)));
 }
 
 /* ---------- GROCERY LIST ---------- */
@@ -834,9 +876,10 @@ function buildList(){
   const wrap=document.getElementById('stores');
   const chosen=Object.keys(selections);
   const hhItems=Object.keys(householdSel);
-  if(chosen.length===0 && hhItems.length===0){
+  const sideDays=Object.keys(sides).filter(di=>(sides[di]||[]).length);
+  if(chosen.length===0 && hhItems.length===0 && sideDays.length===0){
     panel.classList.add('show');
-    sel.innerHTML='<span class="empty">Pick at least one dinner above (or check some household goods), then build your list.</span>';
+    sel.innerHTML='<span class="empty">Pick at least one dinner above (or add a side / check some household goods), then build your list.</span>';
     wrap.innerHTML=''; panel.scrollIntoView({behavior:'smooth'}); return;
   }
   // aggregate ingredients by store; track serving-factor (for amounts) + meal count
@@ -858,6 +901,21 @@ function buildList(){
       byStore[store][item].meals+=1;
     });
   });
+  // add side dishes (scale to the same servings as that day's dinner)
+  let sideSummary=[];
+  sideDays.forEach(di=>{
+    const factor=thistleNights[di]?KIDS/FULL:1;
+    sides[di].forEach(side=>{
+      side.ing.forEach(([item,defStore])=>{
+        const store=storeFor(item,defStore);
+        byStore[store]=byStore[store]||{};
+        byStore[store][item]=byStore[store][item]||{factor:0,meals:0,hh:false};
+        byStore[store][item].factor+=factor;
+        byStore[store][item].meals+=1;
+      });
+    });
+    sideSummary.push(`<strong>${DAYS[di].day}:</strong> ${sides[di].map(s=>s.name).join(', ')}`);
+  });
   // add checked household goods (no serving scaling)
   hhItems.forEach(item=>{
     const store=storeFor(item,HH_DEFAULT[item]||"Walmart");
@@ -868,7 +926,9 @@ function buildList(){
   const head=`<strong>Quantities scale to who's eating</strong> — full nights serve ${FULL}, Thistle-adult nights serve ${KIDS} (kids). `
     + (thistleCount?`${thistleCount} Thistle night${thistleCount>1?'s':''} this week. `:'')
     + `<span class="q">Use the dropdown on any item to change where you buy it — it'll remember.</span>`;
-  sel.innerHTML=head+(summaryParts.length?'<br>This week: '+summaryParts.join(' &nbsp;•&nbsp; '):'');
+  sel.innerHTML=head
+    +(summaryParts.length?'<br>This week: '+summaryParts.join(' &nbsp;•&nbsp; '):'')
+    +(sideSummary.length?'<br><span class="q">Sides:</span> '+sideSummary.join(' &nbsp;•&nbsp; '):'');
   let html='';
   STORE_ORDER.forEach(store=>{
     if(!byStore[store])return;
@@ -893,16 +953,16 @@ function buildList(){
 /* ---------- MODALS ---------- */
 function openModal(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden';}
 function closeModal(id){document.getElementById(id).classList.remove('show');document.body.style.overflow='';}
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal('recipeModal');closeModal('addMealModal');closeScanner();} });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal('recipeModal');closeModal('addMealModal');closeModal('addSideModal');closeScanner();} });
 
 /* full-serving quantity for a single recipe (factor 1) */
 function recipeQty(item){ const q=QTY[item]; return q?(q[0]+' '+q[1]):''; }
 
 /* ---------- RECIPE VIEWER ---------- */
-function openRecipe(di,mi){
-  const m=mealsFor(di)[mi]; if(!m) return;
-  document.getElementById('rcpTheme').textContent=DAYS[di].day+' · '+DAYS[di].theme;
-  document.getElementById('rcpTitle').innerHTML=m.name+(m.custom?' <span class="custom-tag">yours</span>':'');
+function showRecipe(m, opts){
+  opts=opts||{};
+  document.getElementById('rcpTheme').textContent=opts.context||'';
+  document.getElementById('rcpTitle').innerHTML=m.name+(opts.tag?` <span class="custom-tag">${opts.tag}</span>`:'');
   const steps=(m.steps&&m.steps.length)?m.steps:(RECIPES[m.name]||[]);
   let h='';
   if(m.gf==='adapt'&&m.note) h+=`<div class="recipe-note">🌾 Gluten-free: ${m.note}</div>`;
@@ -913,16 +973,25 @@ function openRecipe(di,mi){
   });
   h+='</ul></div><div class="recipe-sec"><h3>Cooking instructions</h3>';
   if(steps.length) h+='<ol class="recipe-steps">'+steps.map(s=>`<li>${s}</li>`).join('')+'</ol>';
-  else h+='<p class="no-recipe">No instructions added yet for this dinner.</p>';
+  else h+='<p class="no-recipe">No instructions added yet.</p>';
   h+='</div>';
-  if(m.custom) h+=`<div class="mfoot"><button class="warn" onclick="deleteCustomMeal(${di},${mi})">🗑 Delete this dinner</button></div>`;
+  if(opts.onDelete) h+=`<div class="mfoot"><button class="warn" id="rcpDeleteBtn">🗑 ${opts.deleteLabel||'Delete'}</button></div>`;
   document.getElementById('rcpBody').innerHTML=h;
+  if(opts.onDelete) document.getElementById('rcpDeleteBtn').onclick=opts.onDelete;
   openModal('recipeModal');
+}
+function openRecipe(di,mi){
+  const m=mealsFor(di)[mi]; if(!m) return;
+  showRecipe(m,{context:DAYS[di].day, tag:m.custom?'yours':'', onDelete:m.custom?()=>deleteCustomMeal(di,mi):null, deleteLabel:'Delete this dinner'});
+}
+function openSideRecipe(di,si){
+  const s=(sides[di]||[])[si]; if(!s) return;
+  showRecipe(s,{context:DAYS[di].day+' · side', tag:'side', onDelete:()=>deleteSide(di,si), deleteLabel:'Delete this side'});
 }
 
 /* ---------- ADD A DINNER ---------- */
 function openAddMeal(){
-  document.getElementById('am-day').innerHTML=DAYS.map((d,i)=>`<option value="${i}">${d.day} — ${d.theme}</option>`).join('');
+  document.getElementById('am-day').innerHTML=DAYS.map((d,i)=>`<option value="${i}">${d.day}</option>`).join('');
   document.getElementById('am-name').value='';
   document.getElementById('am-desc').value='';
   document.getElementById('am-note').value='';
@@ -933,8 +1002,7 @@ function openAddMeal(){
   addIngredientRow(); addIngredientRow(); addIngredientRow();
   openModal('addMealModal');
 }
-function addIngredientRow(name='',store='Smiths',amt='',unit=''){
-  const wrap=document.getElementById('am-ings');
+function makeIngRow(name='',store='Smiths',amt='',unit=''){
   const row=document.createElement('div'); row.className='ing-row';
   const esc=s=>String(s).replace(/"/g,'&quot;');
   row.innerHTML=`<input class="ing-name" type="text" placeholder="Ingredient" value="${esc(name)}" autocomplete="off">
@@ -942,7 +1010,22 @@ function addIngredientRow(name='',store='Smiths',amt='',unit=''){
     <input class="ing-amt" type="text" placeholder="Qty" value="${esc(amt)}" autocomplete="off">
     <input class="ing-unit" type="text" placeholder="unit" value="${esc(unit)}" autocomplete="off">
     <button class="rm" onclick="this.parentNode.remove()" title="Remove">×</button>`;
-  wrap.appendChild(row);
+  return row;
+}
+function addIngredientRow(name,store,amt,unit){ document.getElementById('am-ings').appendChild(makeIngRow(name,store,amt,unit)); }
+function addSideIngRow(name,store,amt,unit){ document.getElementById('side-ings').appendChild(makeIngRow(name,store,amt,unit)); }
+// collect [item,store] pairs from an ingredient-row container, registering any new quantities
+function collectIngredients(containerId){
+  const ing=[];
+  document.querySelectorAll('#'+containerId+' .ing-row').forEach(r=>{
+    const n=r.querySelector('.ing-name').value.trim(); if(!n) return;
+    const s=r.querySelector('.ing-store').value;
+    const a=parseFloat(r.querySelector('.ing-amt').value);
+    const u=r.querySelector('.ing-unit').value.trim();
+    ing.push([n,s]);
+    if(!QTY[n]&&!isNaN(a)){ customQty[n]=[a,u||'',0]; QTY[n]=customQty[n]; }
+  });
+  return ing;
 }
 function saveMeal(){
   const di=+document.getElementById('am-day').value;
@@ -980,15 +1063,45 @@ function deleteCustomMeal(di,mi){
   if(document.getElementById('panel').classList.contains('show')) buildList();
 }
 
+/* ---------- SIDES ---------- */
+let sideDay=0;
+function openAddSide(di){
+  sideDay=di;
+  document.getElementById('sideDayLabel').textContent=DAYS[di].day;
+  document.getElementById('side-name').value='';
+  document.getElementById('side-steps').value='';
+  document.getElementById('side-ings').innerHTML='';
+  addSideIngRow(); addSideIngRow();
+  openModal('addSideModal');
+}
+function saveSide(){
+  const name=document.getElementById('side-name').value.trim();
+  if(!name){ alert('Please give the side a name.'); return; }
+  const ing=collectIngredients('side-ings');
+  if(!ing.length){ alert('Add at least one ingredient (name required).'); return; }
+  const steps=document.getElementById('side-steps').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  (sides[sideDay]=sides[sideDay]||[]).push({name,ing,steps});
+  save(); render(); closeModal('addSideModal');
+  if(document.getElementById('panel').classList.contains('show')) buildList();
+}
+function deleteSide(di,si){
+  if(!sides[di]||si<0||si>=sides[di].length) return;
+  if(!confirm('Delete this side?')) return;
+  sides[di].splice(si,1);
+  if(!sides[di].length) delete sides[di];
+  save(); render(); closeModal('recipeModal');
+  if(document.getElementById('panel').classList.contains('show')) buildList();
+}
+
 /* ---------- STATE BUNDLE ----------
    The whole shared household record, in one object. */
 function collectDoc(){
-  return {selections,thistleNights,householdSel,storePrefs,customItems,customMeals,customQty,barcodeMap};
+  return {selections,thistleNights,householdSel,storePrefs,customItems,customMeals,customQty,barcodeMap,sides};
 }
 function assignDoc(o){
   selections=o.selections||{}; thistleNights=o.thistleNights||{}; householdSel=o.householdSel||{};
   storePrefs=o.storePrefs||{}; customItems=o.customItems||[]; customMeals=o.customMeals||{}; customQty=o.customQty||{};
-  barcodeMap=o.barcodeMap||{};
+  barcodeMap=o.barcodeMap||{}; sides=o.sides||{};
   customItems.forEach(c=>HH_DEFAULT[c.n]=c.s);  // register custom household defaults
   Object.assign(QTY,customQty);                 // re-register custom meal ingredient quantities
 }
